@@ -1,0 +1,11 @@
+Vermillion Throw Rug stat point value updates for the matchup starting on {date}:
+
+The following stats have been removed for this matchup:
+
+{removed}
+
+The following stats have had their points doubled for this matchup:
+
+{doubled}
+
+Good luck!

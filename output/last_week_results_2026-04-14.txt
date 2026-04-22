@@ -1,0 +1,37 @@
+__**WEEK 2 RESULTS/UPDATES**__
+**NNT vs. CRAB**
+Initial Score: NNT 744.8 - CRAB 438.8
+Difference of 306.0, starting with odd number. NNT drops Brice Turang. CRAB drops Geraldo Perdomo.
+NNT score starts with an odd number, so incurs 100-point penalty; Ends at 644.8.
+CRAB score starts with an even number, so receives 100-point bonus; Ends at 538.8.
+Final score: NNT 644.8 - CRAB 538.8
+**CC vs. SST**
+Initial Score: CC 790.0 - SST 704.2
+Difference of 85.8, starting with even number. So no drops.
+CC score starts with an odd number, so incurs 100-point penalty; Ends at 690.0.
+SST score starts with an odd number, so incurs 100-point penalty; Ends at 604.2.
+Final score: CC 690.0 - SST 604.2
+**RIGD vs. TDSC**
+Initial Score: RIGD 583.8 - TDSC 257.0
+Difference of 326.8, starting with odd number. RIGD drops Cal Raleigh. TDSC drops Gunnar Henderson.
+RIGD score starts with an odd number, so incurs 100-point penalty; Ends at 483.8.
+TDSC score starts with an even number, so receives 100-point bonus; Ends at 357.0.
+Final score: RIGD 483.8 - TDSC 357.0
+**T3 vs. TBD**
+Initial Score: T3 40.0 - TBD 881.6
+Difference of 841.6, starting with even number. So no drops.
+T3 score starts with an even number, so receives 100-point bonus; Ends at 140.0.
+TBD score starts with an even number, so receives 100-point bonus; Ends at 981.6.
+Final score: T3 140.0 - TBD 981.6
+**AAT vs. HEN**
+Initial Score: AAT 626.6 - HEN 262.8
+Difference of 363.8, starting with odd number. AAT drops Logan Gilbert. HEN drops Manny Machado.
+AAT score starts with an even number, so receives 100-point bonus; Ends at 726.6.
+HEN score starts with an even number, so receives 100-point bonus; Ends at 362.8.
+Final score: AAT 726.6 - HEN 362.8
+**WI vs. AVDG**
+Initial Score: WI 266.6 - AVDG 375.0
+Difference of 108.4, starting with odd number. WI drops Jordan Walker. AVDG drops Elly De La Cruz.
+WI score starts with an even number, so receives 100-point bonus; Ends at 366.6.
+AVDG score starts with an odd number, so incurs 100-point penalty; Ends at 275.0.
+Final score: WI 366.6 - AVDG 275.0

@@ -1,0 +1,286 @@
+{
+  "scoringSettings": {
+    "scoringItems": [
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 15,
+        "statId": 70
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 20,
+        "statId": 65
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 20,
+        "statId": 66
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -3,
+        "statId": 37
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -5,
+        "statId": 26
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 4,
+        "statId": 48
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -6,
+        "statId": 24
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 0.1,
+        "statId": 68
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 10,
+        "statId": 5
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 4.5,
+        "statId": 20
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 4.5,
+        "statId": 21
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 5,
+        "statId": 23
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 10,
+        "statId": 64
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -6,
+        "statId": 45
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 0.7,
+        "statId": 69
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 2.5,
+        "statId": 34
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 12,
+        "statId": 62
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 11,
+        "statId": 60
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 0.7,
+        "statId": 73
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -5,
+        "statId": 46
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 15,
+        "statId": 57
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -1,
+        "statId": 0
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -7,
+        "statId": 58
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 3,
+        "statId": 15
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 4,
+        "statId": 7
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 2.5,
+        "statId": 12
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -2,
+        "statId": 27
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 6,
+        "statId": 3
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -0.1,
+        "statId": 33
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 5,
+        "statId": 52
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 3,
+        "statId": 10
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 7,
+        "statId": 63
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 8,
+        "statId": 4
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": 4,
+        "statId": 53
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -2,
+        "statId": 39
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -2,
+        "statId": 42
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -0.5,
+        "statId": 11
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -5,
+        "statId": 72
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -2,
+        "statId": 50
+      },
+      {
+        "isReverseItem": false,
+        "leagueRanking": 0,
+        "leagueTotal": 0,
+        "points": -2,
+        "statId": 51
+      }
+    ]
+  }
+}

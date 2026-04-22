@@ -1,0 +1,37 @@
+__**WEEK 2 RESULTS/UPDATES**__
+**NNT vs. CRAB**
+Initial Score: NNT 644.8 - CRAB 538.8
+Difference of 106.0, starting with odd number. NNT drops Joe Ryan. CRAB drops George Kirby.
+NNT score starts with an even number, so receives 100-point bonus; Ends at 744.8.
+CRAB score starts with an odd number, so incurs 100-point penalty; Ends at 438.8.
+Final score: NNT 744.8 - CRAB 438.8
+**CC vs. SST**
+Initial Score: CC 690.0 - SST 604.2
+Difference of 85.8, starting with even number. So no drops.
+CC score starts with an even number, so receives 100-point bonus; Ends at 790.0.
+SST score starts with an even number, so receives 100-point bonus; Ends at 704.2.
+Final score: CC 790.0 - SST 704.2
+**RIGD vs. TDSC**
+Initial Score: RIGD 483.8 - TDSC 357.0
+Difference of 126.8, starting with odd number. RIGD drops Jhoan Duran. TDSC drops Brandon Woodruff.
+RIGD score starts with an even number, so receives 100-point bonus; Ends at 583.8.
+TDSC score starts with an odd number, so incurs 100-point penalty; Ends at 257.0.
+Final score: RIGD 583.8 - TDSC 257.0
+**T3 vs. TBD**
+Initial Score: T3 140.0 - TBD 981.6
+Difference of 841.6, starting with even number. So no drops.
+T3 score starts with an odd number, so incurs 100-point penalty; Ends at 40.0.
+TBD score starts with an odd number, so incurs 100-point penalty; Ends at 881.6.
+Final score: T3 40.0 - TBD 881.6
+**AAT vs. HEN**
+Initial Score: AAT 726.6 - HEN 362.8
+Difference of -363.8, starting with odd number. AAT drops Logan Gilbert. HEN drops Riley O'Brien.
+AAT score starts with an odd number, so incurs 100-point penalty; Ends at 626.6.
+HEN score starts with an odd number, so incurs 100-point penalty; Ends at 262.8.
+Final score: AAT 626.6 - HEN 262.8
+**WI vs. AVDG**
+Initial Score: WI 366.6 - AVDG 275.0
+Difference of -91.6, starting with odd number. WI drops Tony Santillan. AVDG drops Paul Skenes.
+WI score starts with an odd number, so incurs 100-point penalty; Ends at 266.6.
+AVDG score starts with an even number, so receives 100-point bonus; Ends at 375.0.
+Final score: WI 266.6 - AVDG 375.0

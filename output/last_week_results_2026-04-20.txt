@@ -1,0 +1,37 @@
+__**WEEK 3 RESULTS/UPDATES**__
+**CRAB vs. SST**
+Initial Score: CRAB 661.4 - SST 989.6
+Difference of 328.2, starting with odd number. CRAB drops Ketel Marte. SST drops Ben Rice.
+CRAB score starts with an even number, so receives 100-point bonus; Ends at 761.4.
+SST score starts with an odd number, so incurs 100-point penalty; Ends at 889.6.
+Final score: CRAB 761.4 - SST 889.6
+**CC vs. NNT**
+Initial Score: CC 264.4 - NNT 920.4
+Difference of 656.0, starting with even number. So no drops.
+CC score starts with an even number, so receives 100-point bonus; Ends at 364.4.
+NNT score starts with an odd number, so incurs 100-point penalty; Ends at 820.4.
+Final score: CC 364.4 - NNT 820.4
+**TDSC vs. TBD**
+Initial Score: TDSC 941.2 - TBD 895.4
+Difference of 45.8, starting with even number. So no drops.
+TDSC score starts with an odd number, so incurs 100-point penalty; Ends at 841.2.
+TBD score starts with an even number, so receives 100-point bonus; Ends at 995.4.
+Final score: TDSC 841.2 - TBD 995.4
+**T3 vs. RIGD**
+Initial Score: T3 860.2 - RIGD 1202.8
+Difference of 342.6, starting with odd number. T3 drops Cody Bellinger. RIGD drops Mike Trout.
+T3 score starts with an even number, so receives 100-point bonus; Ends at 960.2.
+RIGD score starts with an odd number, so incurs 100-point penalty; Ends at 1102.8.
+Final score: T3 960.2 - RIGD 1102.8
+**HEN vs. AVDG**
+Initial Score: HEN 645.0 - AVDG 562.4
+Difference of 82.6, starting with even number. So no drops.
+HEN score starts with an even number, so receives 100-point bonus; Ends at 745.0.
+AVDG score starts with an odd number, so incurs 100-point penalty; Ends at 462.4.
+Final score: HEN 745.0 - AVDG 462.4
+**WI vs. AAT**
+Initial Score: WI 689.2 - AAT 390.8
+Difference of 298.4, starting with even number. So no drops.
+WI score starts with an even number, so receives 100-point bonus; Ends at 789.2.
+AAT score starts with an odd number, so incurs 100-point penalty; Ends at 290.8.
+Final score: WI 789.2 - AAT 290.8

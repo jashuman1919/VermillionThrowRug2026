@@ -1,0 +1,49 @@
+Vermillion Throw Rug stat point value updates for the matchup starting on 2026-04-20:
+
+The following stats have been removed for this matchup:
+
+    R
+    1B
+    2B
+    HR (Batters)
+    K (Batters)
+    SAC
+    SB
+    GIDP
+    PO
+    AST
+    E
+    GS
+    ER
+    HR (Pitchers)
+    PKO
+    QS
+    NH
+    PG
+    SV
+    BS
+
+The following stats have had their points doubled for this matchup:
+
+    AB: (-1 -> -2)
+    3B: (8 -> 16)
+    RBI: (4.5 -> 9.0)
+    BB (Batters): (3 -> 6)
+    IBB: (-0.5 -> -1.0)
+    HBP: (2.5 -> 5.0)
+    CS: (-6 -> -12)
+    OFAST: (15 -> 30)
+    DPT: (0.7 -> 1.4)
+    IP: (2.5 -> 5.0)
+    H: (-3 -> -6)
+    BB (Pitchers): (-2 -> -4)
+    HB: (-2 -> -4)
+    K (Pitchers): (4 -> 8)
+    WP: (-2 -> -4)
+    B: (-2 -> -4)
+    CG: (12 -> 24)
+    SO: (10 -> 20)
+    W: (4 -> 8)
+    HD: (11 -> 22)
+
+Good luck!
