@@ -58,11 +58,24 @@ def parse_args():
                         help='Disable player transactions.')
 
     args = parser.parse_args()
+    
+    print('################ Arguments ################')
+    print(f'Debug: {args.debug}')
+    print(f'Disable Player Transactions: {args.disable_player_transactions}')
+    print(f'Cookie file: {args.cookie_file}')
+    if args.swid == '':
+        print(f'SWID not provided')
+    else:
+        print(f'SWID provided')
+    if args.espn_s2 == '':
+        print(f'ESPN-S2 not provided')
+    else:
+        print(f'ESPN-S2 provided')
 
     if args.cookie_file is None and (args.swid == '' or args.espn_s2 == ''):
-        raise ValueError('You must either provide cookie file (-f) or both swid (-s) and espn-s2 (-e).')
+        raise ValueError('You must either provide cookie file (-f) or both SWID (-s) and ESPN-S2 (-e).')
     if args.cookie_file is not None and (args.swid != '' or args.espn_sw != ''):
-        raise ValueError('You may not provide cookie file (-c) and either swid (-s) or espn-sw (-e).')
+        raise ValueError('You may not provide cookie file (-c) and either SWID (-s) or ESPN-S2 (-e).')
 
     return args
 
@@ -471,6 +484,7 @@ class Vermillion_Throw_Rug_Runner:
         
         for team in teams:
             team_id = team['id']
+            print(f'Team ID {team_id}')
             players = sorted(team['roster']['entries'], key=lambda x: x['playerPoolEntry']['player']['stats'][1]['appliedTotal'], reverse=True)
             drop_probs = linspace(0, MAX_DROP_PROB, len(players))
             drops = []
