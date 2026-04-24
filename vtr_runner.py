@@ -64,8 +64,9 @@ def build_cookie(args):
         with open(args.cookies_file) as f:
             return json.load(f)
     return {
-      'SWID': args.swid,
-      'espn_s2': args.espn_s2
+        'SWID': args.swid,
+        'espn_s2': args.espn_s2
+    }
 
 def first_digit_even(number):
     first_digit = int(str(abs(number))[0])
