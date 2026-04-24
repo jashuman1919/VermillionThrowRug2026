@@ -4,6 +4,23 @@ on:
   schedule:
     - cron: '0 10 * * *'
   workflow_dispatch: 
+    inputs:
+        debug:
+          description: 'Enable Debugging'
+          required: false
+          default: 'true'
+          type: choice
+          options:
+            - true
+            - false
+        disable_player_transactions:
+          description: 'Disable Player Transactions'
+          required: false
+          default: 'true'
+          type: choice
+          options:
+            - true
+            - false
 
 permissions:
   contents: read
@@ -37,4 +54,11 @@ jobs:
         ESPN_S2: ${{ secrets.ESPN_S2 }}
       run: |
         . .venv/bin/activate
-        python vtr_runner.py -dp -s $SWID -e $ESPN_S2
+        args=""
+        if [ "${{ inputs.debug }}" == "true" ]; then
+          args="-d"
+        fi
+        if [ "${{ inputs.disable_player_transactions }}" == "true" ]; then
+          args="$args -p"
+        fi
+        python vtr_runner.py $args -s $SWID -e $ESPN_S2
