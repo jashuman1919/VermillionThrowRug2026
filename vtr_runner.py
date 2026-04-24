@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone
 from copy import deepcopy
 from numpy import linspace
 from os import getenv
+from argparse import ArgumentParser
 
 SETTINGS_UPDATE_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/settings?scoringPeriodId=0'
 EMAIL_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/communication/topics'
@@ -16,13 +17,6 @@ SCHEDULE_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/
 TRANSACTION_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/transactions'
 ROSTER_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=mRoster&{roster_for_team_id}'
 PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=kona_player_info'
-
-DEBUG = (getenv('DEBUG', 'false').lower() == 'true')
-PLAYER_TRANSACTIONS = (getenv('ENABLE_PLAYER_TRANSACTIONS', 'false').lower() == 'true')
-TEST_VAR = getenv('TEST_VAR', 'test_var_default')
-print(f'DEBUG: {DEBUG}')
-print(f'PLAYER_TRANSACTIONS: {PLAYER_TRANSACTIONS}')
-print(f'TEST_VAR: {TEST_VAR}')
 
 BATTER_POS_QUANTITIES = {0: 1,
                          1: 1,
@@ -38,6 +32,40 @@ PITCHER_POS_QUANTITIES = {14: 5,
                           15: 5}
 
 MAX_DROP_PROB = 0.05
+
+def parse_args():
+    parser = ArgumentParser(description="Vermillion Throw Rug Runner 2026")
+
+    parser.add_argument('-f',
+                        '--cookie-file',
+                        default=None,
+                        help='File containing cookie data.')
+    parser.add_argument('-s',
+                        '--swid',
+                        default='',
+                        help='ESPN SWID. Use if not using cookie file.')
+    parser.add_argument('-e',
+                        '--espn-s2',
+                        default='',
+                        help='ESPN-S2. Use if not using cookie file.')
+    parser.add_argument('-d',
+                        '--debug',
+                        action='store_true',
+                        help='Debug.')
+    parser.add_argument('-p',
+                        '--disable_player_transactions',
+                        action='store_true',
+                        help='Disable player transactions.')
+    
+    return parser.parse_args()
+
+def build_cookie(args):
+    if args.cookie_file is not None:
+        with open(args.cookies_file) as f:
+            return json.load(f)
+    return {
+      'SWID': args.swid,
+      'espn_s2': args.espn_s2
 
 def first_digit_even(number):
     first_digit = int(str(abs(number))[0])
@@ -177,9 +205,10 @@ class Mock_Http_Response:
         return json.loads(self.data)
 
 class Vermillion_Throw_Rug_Runner:
-    def __init__(self, cookies_file):
-        with open(cookies_file) as f:
-            self.cookies = json.load(f)
+    def __init__(self, cookies, debug, disable_player_transactions):
+        self.cookies = cookies
+        self.debug = debug
+        self.disable_player_transactions = disable_player_transactions
 
     def http_request(self, url, headers={}, data=None, attempts=5):
         response = None
@@ -189,7 +218,7 @@ class Vermillion_Throw_Rug_Runner:
             if data is None:
                 response = requests.get(url, cookies=self.cookies, headers=headers)
             else:
-                if DEBUG:
+                if self.debug:
                     response = Mock_Http_Response(False, 400, '{}')
                     break
                 else:
@@ -225,7 +254,7 @@ class Vermillion_Throw_Rug_Runner:
         if response.ok:
             print('Success updating stat point values.')
             items_dict = {item['statId']: item['points'] for item in items}
-            if not DEBUG:
+            if not self.debug:
                 with open('data/matchup_settings.json') as f:
                     matchup_settings = json.load(f) 
                 matchup_settings[str(matchup_period_id)] = items_dict
@@ -360,7 +389,7 @@ class Vermillion_Throw_Rug_Runner:
                               'type': 'DROP',
                               'fromTeamId': team_id}]}
         payload_str = json.dumps(payload)
-        if PLAYER_TRANSACTIONS:
+        if not self.disable_player_transactions:
             response = self.http_request(TRANSACTION_URL, data=payload_str)
             if response.ok:
                 print(f'Dropped {best_player_name} from {team_dict[team_id]}.')
@@ -466,7 +495,7 @@ class Vermillion_Throw_Rug_Runner:
                     'items': drop_items
                 }
                 payload_str = json.dumps(payload)
-                if PLAYER_TRANSACTIONS:
+                if not self.disable_player_transactions:
                     response = self.http_request(TRANSACTION_URL, data=payload_str)
                     if response.ok:
                         print(f'Completed drops for bot team ID {team_id}.')
@@ -508,7 +537,7 @@ class Vermillion_Throw_Rug_Runner:
                         ]
                     }
                     payload_str = json.dumps(payload)
-                    if PLAYER_TRANSACTIONS:
+                    if not self.disable_player_transactions:
                         response = self.http_request(TRANSACTION_URL, data=payload_str)
                         if response.ok:
                             print(f'Added player {id} to bot team ID {team_id}.')
@@ -545,7 +574,7 @@ class Vermillion_Throw_Rug_Runner:
                     'items': move_items
                 }
                 payload_str = json.dumps(payload)
-                if PLAYER_TRANSACTIONS or True:
+                if not self.disable_player_transactions:
                     response = self.http_request(TRANSACTION_URL, data=payload_str)
                     if response.ok:
                         print(f'Successfully arranged lineup for bot team ID {team_id}.')
@@ -583,7 +612,7 @@ class Vermillion_Throw_Rug_Runner:
         self.bot_transactions(current_scoring_period)
 
 if __name__ == '__main__':
-    runner = Vermillion_Throw_Rug_Runner('data/cookie.json')
-    #runner.run()
-    
-    runner.bot_transactions(31)
+    ARGS = parse_args()
+    COOKIES = build_cookie(ARGS)
+    RUNNER = Vermillion_Throw_Rug_Runner(COOKIES)
+    RUNNER.run()
