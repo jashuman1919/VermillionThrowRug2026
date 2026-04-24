@@ -32,6 +32,9 @@ jobs:
         . .venv/bin/activate
         pip install -r requirements.txt
     - name: Run
+      env:
+        SWID: ${{ secrets.SWID }}
+        ESPN_S2: ${{ secrets.ESPN_S2 }}
       run: |
         . .venv/bin/activate
-        python vtr_runner.py -d -p
+        python vtr_runner.py -dp -s $SWID -e $ESPN_S2
