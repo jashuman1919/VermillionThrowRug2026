@@ -615,5 +615,5 @@ class Vermillion_Throw_Rug_Runner:
 if __name__ == '__main__':
     ARGS = parse_args()
     COOKIES = build_cookie(ARGS)
-    RUNNER = Vermillion_Throw_Rug_Runner(COOKIES)
+    RUNNER = Vermillion_Throw_Rug_Runner(COOKIES, ARGS.debug, ARGS.disable_player_transactions)
     RUNNER.run()
