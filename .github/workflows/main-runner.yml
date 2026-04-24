@@ -15,17 +15,23 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v3
+    - name: Setup Python
+      uses: actions/setup-python@v5
       with:
-        auto-update-conda: true
-        python-version: "3.10"
-        activate-environment: "vtr-env"
-        environment-file: env.yml
+        python-version: '3.13'
+    - name: Cache venv
+      id: cache-venv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
     - name: Install dependencies
-      shell: bash -l {0}
+      if: steps.cache-venv.outputs.cache-hit != 'true'
       run: |
-        conda env update --file env.yml
+        python -m venv .venv
+        . .venv/bin/activate
+        pip install -r requirements.txt
     - name: Run
-      shell: bash -l {0}
-      run: python vtr_runner.py -d -p
+      run: |
+        . .venv/bin/activate
+        python vtr_runner.py -d -p
