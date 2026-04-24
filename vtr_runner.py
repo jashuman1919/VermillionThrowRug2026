@@ -2,7 +2,7 @@
 
 import json
 import requests
-from random import random, shuffle
+from random import random, shuffle, sample
 from datetime import date, datetime, timezone
 from copy import deepcopy
 from numpy import linspace
@@ -14,9 +14,10 @@ ADJUST_SCORE_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/sea
 SCHEDULE_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=mMatchupScore&view=mTeam'
 TRANSACTION_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/transactions'
 ROSTER_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=mRoster&{roster_for_team_id}'
+PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=kona_player_info'
 
-DEBUG = True
-DROP_PLAYERS = True
+DEBUG = False
+PLAYER_TRANSACTIONS = True
 
 BATTER_POS_QUANTITIES = {0: 1,
                          1: 1,
@@ -93,6 +94,74 @@ def get_score_adjustment(team_data, settings, reason):
                        'teamId': team_id}
     return adjustment_dict, (adjustment != current_adjustment)
 
+def player_filter(pos, num):
+    return {
+        'players': {
+            'filterStatus': {
+                'value': [
+                    'FREEAGENT'
+                ]
+            },
+            'filterInjured': {
+                'value': False
+            },
+            'filterSlotIds': {
+                'value': [
+                    pos
+                ]
+            },
+            'limit': num,
+            'offset': 0,
+            'sortAppliedStatTotal': {
+                'sortAsc': False,
+                'sortPriority': 1,
+                'value': '002026'
+            },
+            'filterStatsForTopScoringPeriodIds': {
+                'value': 1,
+                'additionalValue': [
+                    '002026'
+                ]
+            }
+        }
+    }
+
+def find_necessary_transactions(players, pos_quantities, results=None, assignments=None, idx=0):
+    if results is None:
+        results = []
+    if assignments is None:
+        assignments = {}
+
+    if idx == len(players):
+        pickups = {}
+        drops = {p['playerId'] for p in players if p['playerId'] not in assignments}
+        for position, quantity in pos_quantities.items():
+            filled = list(assignments.values()).count(position)
+            pickups[position] = quantity - filled
+        result = (pickups, drops, deepcopy(assignments))
+        if result not in results:
+            results.append(result)
+        return {}, set(), {}
+
+    player = players[idx]
+    id = player['playerId']
+    for position in player['playerPoolEntry']['player']['eligibleSlots']:
+        if position in pos_quantities and pos_quantities[position] > 0:
+            if list(assignments.values()).count(position) < pos_quantities[position]:
+                assignments[id] = position
+                find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
+                del assignments[id]
+    find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
+    
+    if idx == 0:
+        percent_owned_dict = {p['playerId']: p['playerPoolEntry']['player']['ownership']['percentOwned'] for p in players}
+        min_dropped_players = min(len(r[1]) for r in results)
+        acceptable_results = [r for r in results if len(r[1]) == min_dropped_players]
+        best_result = min(acceptable_results, key=lambda x: sum(percent_owned_dict[p] for p in x[1]))
+        return best_result
+        
+    return {}, set(), {}
+
 class Mock_Http_Response:
     def __init__(self, ok, status_code, data):
         self.ok = ok
@@ -139,9 +208,7 @@ class Vermillion_Throw_Rug_Runner:
             default_scores = json.load(f)
         updated_scores = deepcopy(default_scores)
         items = updated_scores['scoringSettings']['scoringItems']
-        shuffle(items)
-        midpt = len(items) // 2
-        items = items[:midpt]
+        items = sample(items, len(items) // 2)
         for item in items:
             item['points'] = round(item['points'] * 2, 1)
         updated_scores['scoringSettings']['scoringItems'] = items
@@ -196,7 +263,7 @@ class Vermillion_Throw_Rug_Runner:
     def recalculate_scores(self, past_periods, team_dict):
         print('################ Recalculating scores for past matchups. ################')
         print(f'Matchups: {list(past_periods)}')
-        with open('matchup_settings.json') as f:
+        with open('data/matchup_settings.json') as f:
             matchup_settings = json.load(f)
     
         adjustments = []
@@ -288,12 +355,12 @@ class Vermillion_Throw_Rug_Runner:
                               'type': 'DROP',
                               'fromTeamId': team_id}]}
         payload_str = json.dumps(payload)
-        if DROP_PLAYERS:
+        if PLAYER_TRANSACTIONS:
             response = self.http_request(TRANSACTION_URL, data=payload_str)
             if response.ok:
                 print(f'Dropped {best_player_name} from {team_dict[team_id]}.')
             else:
-                print(f'WARNING: Unable to drop {best_player_name} from {team_dict[team_id]}.')
+                print(f'WARNING: Unable to drop {best_player_name} from {team_dict[team_id]} (status code {response.status_code}).')
         else:
             print(f'Would have dropped {best_player_name} from {team_dict[team_id]}.')
         return best_player_name
@@ -324,8 +391,26 @@ class Vermillion_Throw_Rug_Runner:
             message += f'Final score: {away_team} {away_score} - {home_team} {home_score}\n'
         print('Done checking and dropping players.')
         return message
+
+    def select_players(self, pos, num):
+        num_options = round(num * 1.5 + 3)
+        filter = player_filter(pos, num_options)
+        headers = {'x-fantasy-filter': json.dumps(filter)}
+        response = self.http_request(PLAYERS_URL, headers)
+        data = response.json()
+        players = sample(data['players'], num)
+        ids = [p['id'] for p in players]
+        return ids
     
-    def bot_transactions(self):
+    def get_roster(self, team_ids):
+        roster_for_team_id = '&'.join(f'rosterForTeamId={id}' for id in team_ids)
+        url = ROSTER_URL.format(roster_for_team_id=roster_for_team_id)
+        response = self.http_request(url)
+        data = response.json()
+        teams = [t for t in data['teams'] if t['id'] in team_ids]
+        return teams
+
+    def bot_transactions(self, scoring_period):
         """
         Check for injured or suspended. Add to drop list.
         Create list of players without injured/suspended players.
@@ -334,34 +419,141 @@ class Vermillion_Throw_Rug_Runner:
         Find best replacement players.
         Add and drop.
         """
-        
+
+        print('################ Bot transactions. ################')
+
         bot_ids = [3, 4]
 
-        roster_for_team_id = '&'.join(f'rosterForTeamId={id}' for id in bot_ids)
-        url = ROSTER_URL.format(roster_for_team_id=roster_for_team_id)
-        response = self.http_request(url)
-        data = response.json()
-        teams = [t for t in data['teams'] if t['id'] in bot_ids]
+        teams = self.get_roster(bot_ids)
         shuffle(teams)
         
         for team in teams:
+            team_id = team['id']
             players = sorted(team['roster']['entries'], key=lambda x: x['playerPoolEntry']['player']['stats'][1]['appliedTotal'], reverse=True)
             drop_probs = linspace(0, MAX_DROP_PROB, len(players))
             drops = []
             for n, p in enumerate(players):
                 player = p['playerPoolEntry']['player']
-                print(player['fullName'])
                 drop_prob = drop_probs[n]
                 if player['injured'] or player['injuryStatus'] == 'SUSPENSION' or random() <= drop_prob:
                     drops.append(player['id'])
             batters = [p for p in players if 12 in p['playerPoolEntry']['player']['eligibleSlots'] and p['playerId'] not in drops]
             pitchers = [p for p in players if 12 not in p['playerPoolEntry']['player']['eligibleSlots'] and p['playerId'] not in drops]
+            print('Arranging batters')
             batter_adds, batter_drops, batter_assignments = find_necessary_transactions(batters, BATTER_POS_QUANTITIES)
+            print('Arranging pitchers')
             pitcher_adds, pitcher_drops, pitcher_assignments = find_necessary_transactions(pitchers, PITCHER_POS_QUANTITIES)
             drops.extend(batter_drops)
             drops.extend(pitcher_drops)
+            pos_adds = batter_adds | pitcher_adds
+            assignments = batter_assignments | pitcher_assignments
+
+            # Drops
+            if len(drops) > 0:
+                drop_items = [{'playerId': id, 'type': 'DROP', 'fromTeamId': team_id} for id in drops]
+                payload = {
+                    'isLeagueManager': False,
+                    'teamId': team_id,
+                    'type': 'ROSTER',
+                    'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
+                    'scoringPeriodId': scoring_period,
+                    'executionType': 'EXECUTE',
+                    'items': drop_items
+                }
+                payload_str = json.dumps(payload)
+                if PLAYER_TRANSACTIONS:
+                    response = self.http_request(TRANSACTION_URL, data=payload_str)
+                    if response.ok:
+                        print(f'Completed drops for bot team ID {team_id}.')
+                    else:
+                        print(f'WARNING: Unable to perform drops for bot team ID {team_id} (status code {response.status_code}).')
+                        date_str = str(date.today())
+                        filename = f'debug/bot_{team_id}_drops_{date_str}.json'
+                        with open(filename, 'w') as f:
+                            json.dump(payload, f)
+                        print(f'  Saving drops payload to file: {filename}')
+            else:
+                print(f'No drops for bot team ID {team_id}.')
+
+            # Adds
+            adds = {}
+            for pos, num in pos_adds.items():
+                if num > 0:
+                    print(f'Finding replacement players for position {pos}.')
+                    ids = self.select_players(pos, num)
+                    adds |= {id: pos for id in ids}
+
+            if len(adds) > 0:
+                failed_add_payloads = []
+                for id, pos in adds.items():
+                    payload = {
+                        'isLeagueManager': False,
+                        'teamId': team_id,
+                        'type': 'FREEAGENT',
+                        'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
+                        'scoringPeriodId': scoring_period,
+                        'executionType': 'EXECUTE',
+                        'items': [
+                            {
+                                'playerId': id,
+                                'type': 'ADD',
+                                'toTeamId': team_id,
+                                'toLineupSlotId': pos
+                            }
+                        ]
+                    }
+                    payload_str = json.dumps(payload)
+                    if PLAYER_TRANSACTIONS:
+                        response = self.http_request(TRANSACTION_URL, data=payload_str)
+                        if response.ok:
+                            print(f'Added player {id} to bot team ID {team_id}.')
+                            assignments[id] = pos
+                        else:
+                            print(f'WARNING: Failed to add player {id} to bot team ID {team_id} (status code {response.status_code}).')
+                            failed_add_payloads.append(payload)
     
-    
+                if len(failed_add_payloads) > 0:
+                    date_str = str(date.today())
+                    filename = f'debug/bot_{team_id}_adds_{date_str}.json'
+                    print('Saving failed add payloads to file: {filename}')
+                    with open(filename, 'w') as f:
+                        json.dump(failed_add_payloads, f)
+            else:
+                print(f'No adds for bot team ID {team_id}.')
+
+            # Re-check lineup
+            team = self.get_roster([team_id])[0]
+            players = team['roster']['entries']
+            current_pos_dict = {p['playerId']: p['lineupSlotId'] for p in players}
+            changed_assignments = {p: pos for p, pos in assignments.items() if pos != current_pos_dict[p]}
+
+            # Moves
+            if len(changed_assignments) > 0:
+                move_items = [{'playerId': p, 'type': 'LINEUP', 'toLineupSlotId': pos} for p, pos in changed_assignments.items()]
+                payload = {
+                    'isLeagueManager': False,
+                    'teamId': team_id,
+                    'type': 'ROSTER',
+                    'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
+                    'scoringPeriodId': scoring_period,
+                    'executionType': 'EXECUTE',
+                    'items': move_items
+                }
+                payload_str = json.dumps(payload)
+                if PLAYER_TRANSACTIONS or True:
+                    response = self.http_request(TRANSACTION_URL, data=payload_str)
+                    if response.ok:
+                        print(f'Successfully arranged lineup for bot team ID {team_id}.')
+                    else:
+                        print(f'WARNING: Failed to arrange lineup for bot team ID {team_id} (status code {response.status_code}).')
+                        date_str = str(date.today())
+                        filename = f'debug/bot_{team_id}_lineup_{date_str}.json'
+                        with open(filename, 'w') as f:
+                            json.dump(payload, f)
+                        print(f'  Saving lineup payload to file: {filename}')
+            else:
+                print(f'No lineup arrangement needed for bot team ID {team_id}.')
+
     def run(self):
         past_periods, current_scoring_period, team_dict = self.get_basic_info()
         last_matchup_period = max(past_periods)
@@ -370,7 +562,6 @@ class Vermillion_Throw_Rug_Runner:
             print('################ Start of matchup. ################')
             last_week_results_message = self.last_week_results(last_matchup_last_scoring_period, last_matchup_period, current_scoring_period, team_dict)
             _, stat_updates_message, _ = self.update_stat_points(last_matchup_period + 1)
-            self.recalculate_scores(past_periods, team_dict)
 
             date_str = str(date.today())
             filename = f'output/last_week_results_{date_str}.txt'
@@ -381,58 +572,13 @@ class Vermillion_Throw_Rug_Runner:
                 f.write(stat_updates_message)
         else:
             print('################ Not start of matchup. ################')
-            recent_past_periods = {k: v for k, v in past_periods.items() if last_matchup_period - k < 1}
-            self.recalculate_scores(recent_past_periods, team_dict)
+            past_periods = {k: v for k, v in past_periods.items() if last_matchup_period - k < 1}
 
-def find_necessary_transactions(players, pos_quantities, results=None, assignments=None, idx=0):
-    if results is None:
-        results = []
-    if assignments is None:
-        assignments = {}
-
-    if idx == len(players):
-        pickups = {}
-        drops = {p['playerId'] for p in players}
-        for position, quantity in pos_quantities.items():
-            if position in assignments:
-                filled = len(assignments[position])
-                drops -= assignments[position]
-            else:
-                filled = 0
-            pickups[position] = quantity - filled
-        result = (pickups, drops, deepcopy(assignments))
-        if result not in results:
-            results.append(result)
-        return {}, set(), {}
-
-    player = players[idx]
-    id = player['playerId']
-    for position in player['playerPoolEntry']['player']['eligibleSlots']:
-        if position in pos_quantities and pos_quantities[position] > 0:
-            if position not in assignments:
-                assignments[position] = {id}
-            elif len(assignments[position]) < pos_quantities[position]:
-                assignments[position] |= {id}
-            else:
-                continue
-            find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
-            assignments[position] -= {id}
-    find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
-    
-    if idx == 0:
-        percent_owned_dict = {p['playerId']: p['playerPoolEntry']['player']['ownership']['percentOwned'] for p in players}
-        min_dropped_players = min(len(r[1]) for r in results)
-        acceptable_results = [r for r in results if len(r[1]) == min_dropped_players]
-        best_result = min(acceptable_results, key=lambda x: sum(percent_owned_dict[p] for p in x[1]))
-        return best_result
-        
-    return {}, set(), {}
+        self.recalculate_scores(past_periods, team_dict)
+        self.bot_transactions(current_scoring_period)
 
 if __name__ == '__main__':
     runner = Vermillion_Throw_Rug_Runner('data/cookie.json')
     #runner.run()
     
-    runner.bot_transactions()
-    
-    
-    
+    runner.bot_transactions(31)
