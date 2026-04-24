@@ -62,3 +62,10 @@ jobs:
           args="$args -p"
         fi
         python vtr_runner.py $args -s $SWID -e $ESPN_S2
+    - name: Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: outputs
+        path: |
+          output
+          debug

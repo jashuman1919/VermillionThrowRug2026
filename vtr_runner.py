@@ -8,6 +8,7 @@ from copy import deepcopy
 from numpy import linspace
 from os import getenv
 from argparse import ArgumentParser
+from pathlib import Path
 
 SETTINGS_UPDATE_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/settings?scoringPeriodId=0'
 EMAIL_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/communication/topics'
@@ -215,6 +216,13 @@ def find_necessary_transactions(players, pos_quantities, results=None, assignmen
         return best_result
         
     return {}, set(), {}
+
+def setup_directories():
+    path = Path('output')
+    path.mkdir(exist_ok=True)
+    
+    path = Path('debug')
+    path.mkdir(exist_ok=True)
 
 class Mock_Http_Response:
     def __init__(self, ok, status_code, data):
@@ -611,6 +619,8 @@ class Vermillion_Throw_Rug_Runner:
                 print(f'No lineup arrangement needed for bot team ID {team_id}.')
 
     def run(self):
+        setup_directories()
+        
         past_periods, current_scoring_period, team_dict = self.get_basic_info()
         last_matchup_period = max(past_periods)
         last_matchup_last_scoring_period = past_periods[last_matchup_period]
