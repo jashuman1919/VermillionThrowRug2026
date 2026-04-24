@@ -56,10 +56,17 @@ def parse_args():
                         '--disable_player_transactions',
                         action='store_true',
                         help='Disable player transactions.')
-    
-    return parser.parse_args()
 
-def build_cookie(args):
+    args = parser.parse_args()
+
+    if args.cookie_file is None and (args.swid == '' or args.espn_s2 == ''):
+        raise ValueError('You must either provide cookie file (-f) or both swid (-s) and espn-s2 (-e).')
+    if args.cookie_file is not None and (args.swid != '' or args.espn_sw != ''):
+        raise ValueError('You may not provide cookie file (-c) and either swid (-s) or espn-sw (-e).')
+
+    return args
+
+def build_cookies(args):
     if args.cookie_file is not None:
         with open(args.cookies_file) as f:
             return json.load(f)
@@ -614,6 +621,6 @@ class Vermillion_Throw_Rug_Runner:
 
 if __name__ == '__main__':
     ARGS = parse_args()
-    COOKIES = build_cookie(ARGS)
+    COOKIES = build_cookies(ARGS)
     RUNNER = Vermillion_Throw_Rug_Runner(COOKIES, ARGS.debug, ARGS.disable_player_transactions)
     RUNNER.run()
