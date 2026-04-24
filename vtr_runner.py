@@ -6,6 +6,7 @@ from random import random, shuffle, sample
 from datetime import date, datetime, timezone
 from copy import deepcopy
 from numpy import linspace
+from os import getenv
 
 SETTINGS_UPDATE_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/settings?scoringPeriodId=0'
 EMAIL_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512/communication/topics'
@@ -16,8 +17,12 @@ TRANSACTION_URL = 'https://lm-api-writes.fantasy.espn.com/apis/v3/games/flb/seas
 ROSTER_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=mRoster&{roster_for_team_id}'
 PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=kona_player_info'
 
-DEBUG = False
-PLAYER_TRANSACTIONS = True
+DEBUG = (getenv('DEBUG', 'false').lower() == 'true')
+PLAYER_TRANSACTIONS = (getenv('ENABLE_PLAYER_TRANSACTIONS', 'false').lower() == 'true')
+TEST_VAR = getenv('TEST_VAR', 'test_var_default')
+print(f'DEBUG: {DEBUG}')
+print(f'PLAYER_TRANSACTIONS: {PLAYER_TRANSACTIONS}')
+print(f'TEST_VAR: {TEST_VAR}')
 
 BATTER_POS_QUANTITIES = {0: 1,
                          1: 1,
