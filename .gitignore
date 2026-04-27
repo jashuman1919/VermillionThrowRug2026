@@ -1,3 +1,5 @@
 debug/*
 output/*
 cookie.json
+discord_token.txt
+test/*

@@ -1,0 +1,7 @@
+**{away} vs. {home}**
+Initial Score: {away} {away_initial} - {home} {home_initial}
+Difference of {diff}, starting with {diff_parity} number. {drops}.
+{away_adjustment}
+{home_adjustment}
+Final score: {away} {away_final} - {home} {home_final}  
+

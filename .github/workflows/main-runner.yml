@@ -52,16 +52,18 @@ jobs:
       env:
         SWID: ${{ secrets.SWID }}
         ESPN_S2: ${{ secrets.ESPN_S2 }}
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        DISCORD_CHANNEL_ID: ${{ vars.DISCORD_CHANNEL_ID }}
       run: |
         . .venv/bin/activate
-        args=""
+        flags=""
         if [ "${{ inputs.debug }}" == "true" ]; then
-          args="-d"
+          flags="-d"
         fi
         if [ "${{ inputs.disable_player_transactions }}" == "true" ]; then
-          args="$args -p"
+          flags="$flags -p"
         fi
-        python vtr_runner.py $args -s $SWID -e $ESPN_S2
+        python vtr_runner.py $flags --swid $SWID --espn-s2 $ESPN_S2 --discord-token $DISCORD_TOKEN --discord-channel $DISCORD_CHANNEL_ID
     - name: Artifacts
       uses: actions/upload-artifact@v4
       with:

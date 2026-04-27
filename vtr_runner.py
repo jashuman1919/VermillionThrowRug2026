@@ -37,18 +37,25 @@ MAX_DROP_PROB = 0.05
 def parse_args():
     parser = ArgumentParser(description="Vermillion Throw Rug Runner 2026")
 
-    parser.add_argument('-f',
-                        '--cookie-file',
+    parser.add_argument('--cookie-file',
                         default=None,
                         help='File containing cookie data.')
-    parser.add_argument('-s',
-                        '--swid',
+    parser.add_argument('--swid',
                         default='',
                         help='ESPN SWID. Use if not using cookie file.')
-    parser.add_argument('-e',
-                        '--espn-s2',
+    parser.add_argument('--espn-s2',
                         default='',
                         help='ESPN-S2. Use if not using cookie file.')
+    parser.add_argument('--discord-file',
+                        default=None,
+                        help='File containing discord token.')
+    parser.add_argument('--discord-token',
+                        default='',
+                        help='Discord token. Use if not using discord file.')
+    parser.add_argument('--discord-channel',
+                        type=int,
+                        default=None,
+                        help='Discord channel ID.')
     parser.add_argument('-d',
                         '--debug',
                         action='store_true',
@@ -65,24 +72,34 @@ def parse_args():
     print(f'Disable Player Transactions: {args.disable_player_transactions}')
     print(f'Cookie file: {args.cookie_file}')
     if args.swid == '':
-        print(f'SWID not provided')
+        print('SWID not provided')
     else:
-        print(f'SWID provided')
+        print('SWID provided')
     if args.espn_s2 == '':
-        print(f'ESPN-S2 not provided')
+        print('ESPN-S2 not provided')
     else:
-        print(f'ESPN-S2 provided')
+        print('ESPN-S2 provided')
+    print(f'Discord file: {args.discord_file}')
+    if args.discord_token == '':
+        print('Discord token not provided.')
+    else:
+        print('Discord token provided.')
+    print(f'Discord channel ID: {args.discord_channel}')
 
     if args.cookie_file is None and (args.swid == '' or args.espn_s2 == ''):
-        raise ValueError('You must either provide cookie file (-f) or both SWID (-s) and ESPN-S2 (-e).')
-    if args.cookie_file is not None and (args.swid != '' or args.espn_sw != ''):
-        raise ValueError('You may not provide cookie file (-c) and either SWID (-s) or ESPN-S2 (-e).')
+        raise ValueError('You must either provide cookie file (--cookie-file) or both SWID (--swid) and ESPN-S2 (--espn-s2).')
+    if args.cookie_file is not None and (args.swid != '' or args.espn_s2 != ''):
+        raise ValueError('You may not provide cookie file (--cookie-file) and either SWID (--swid) or ESPN-S2 (--espn-s2).')
+    if args.discord_file is None and args.discord_token == '':
+        raise ValueError('You must either provide discord file (--discord-file) or discord token (--discord-token).')
+    if args.discord_file is not None and args.discord_token != '':
+        raise ValueError('You may not provide discord file (--discord_file) and discord token (--discord-token).')
 
     return args
 
 def build_cookies(args):
     if args.cookie_file is not None:
-        with open(args.cookies_file) as f:
+        with open(args.cookie_file) as f:
             return json.load(f)
     return {
         'SWID': args.swid,
@@ -120,13 +137,40 @@ def point_update_email_content(default_scores, updated_scores):
                                          doubled=doubled_str)
     return email_content, removed_str, doubled_str
 
+def point_update_message(default_scores, updated_scores, matchup):
+    removed = []
+    doubled = []
+
+    with open('data/stat_ids.json') as f:
+        stat_ids = json.load(f)
+
+    with open('data/stat_updates_message_template.txt') as f:
+        message_template = f.read()
+
+    default_dict = {str(s['statId']): s['points'] for s in default_scores['scoringSettings']['scoringItems']}
+    updated_dict = {str(s['statId']): s['points'] for s in updated_scores['scoringSettings']['scoringItems']}
+
+    for id, stat in stat_ids.items():
+        if id in updated_dict:
+            doubled.append((stat, default_dict[id], updated_dict[id]))
+        else:
+            removed.append(stat)
+
+    removed_str = '    ' + '\n    '.join(removed)
+    doubled_strs = [f'{stat}: ({old} -> {new})' for stat, old, new in doubled]
+    doubled_str = '    ' + '\n    '.join(doubled_strs)
+    message = message_template.format(matchup=matchup,
+                                      removed=removed_str,
+                                      doubled=doubled_str)
+    return message, removed_str, doubled_str
+
 def get_point_bonus_message(team, score):
     if first_digit_even(score):
         score = round(score + 100, 1)
-        return score, f'{team} score starts with an even number, so receives 100-point bonus; Ends at {score}.\n'
+        return score, f'{team} score starts with an even number, so receives 100-point bonus; Ends at {score}.'
     else:
         score = round(score - 100, 1)
-        return score, f'{team} score starts with an odd number, so incurs 100-point penalty; Ends at {score}.\n'
+        return score, f'{team} score starts with an odd number, so incurs 100-point penalty; Ends at {score}.'
     
 def get_score_adjustment(team_data, settings, reason):
     current_adjustment = team_data['adjustment']
@@ -276,9 +320,9 @@ class Vermillion_Throw_Rug_Runner:
             item['points'] = round(item['points'] * 2, 1)
         updated_scores['scoringSettings']['scoringItems'] = items
         updated_scores_str = json.dumps(updated_scores)
-    
+
         response = self.http_request(SETTINGS_UPDATE_URL, data=updated_scores_str)
-        email_content, removed_str, doubled_str = point_update_email_content(default_scores, updated_scores)
+        message, removed_str, doubled_str = point_update_message(default_scores, updated_scores, matchup_period_id)
     
         if response.ok:
             print('Success updating stat point values.')
@@ -313,7 +357,7 @@ class Vermillion_Throw_Rug_Runner:
     
         print('Done updating stat point values')
     
-        return updated_scores, email_content, response
+        return updated_scores, message, response
     
     def get_box_scores(self, scoring_period, matchup_period):
         url = BOX_SCORE_URL.format(scoring_period=scoring_period)
@@ -430,28 +474,44 @@ class Vermillion_Throw_Rug_Runner:
     
     def last_week_results(self, scoring_period, matchup_period, current_scoring_period, team_dict):
         print(f'################ Checking and dropping best players from matchup period {matchup_period}. ################')
-        message = f'__**WEEK {matchup_period} RESULTS/UPDATES**__\n'
+
+        message = f'__**WEEK {matchup_period} RESULTS/UPDATES**__  \n\n'
+        with open('data/matchup_message_template.txt') as f:
+            message_template = f.read()
+
         data = self.get_box_scores(scoring_period, matchup_period)
         schedule = data['schedule']
+
         for matchup in schedule:
-            away_score = matchup['away']['totalPoints']
-            home_score = matchup['home']['totalPoints']
             away_team = team_dict[matchup['away']['teamId']]
             home_team = team_dict[matchup['home']['teamId']]
-            message += f'**{away_team} vs. {home_team}**\n'
-            message += f'Initial Score: {away_team} {away_score} - {home_team} {home_score}\n'
-            score_difference = round(abs(home_score - away_score), 1)
+            away_initial_score = matchup['away']['totalPoints']
+            home_initial_score = matchup['home']['totalPoints']
+            score_difference = round(abs(home_initial_score - away_initial_score), 1)
+            
             if first_digit_even(score_difference):
-                message += f'Difference of {score_difference}, starting with even number. So no drops.\n'
+                diff_parity = 'even'
+                drops_message = 'So no drops.'
             else:
                 away_player = self.drop_best_player(matchup['away'], current_scoring_period, team_dict)
                 home_player = self.drop_best_player(matchup['home'], current_scoring_period, team_dict)
-                message += f'Difference of {score_difference}, starting with odd number. {away_team} drops {away_player}. {home_team} drops {home_player}.\n'
-            away_score, message_line = get_point_bonus_message(away_team, away_score)
-            message += message_line
-            home_score, message_line = get_point_bonus_message(home_team, home_score)
-            message += message_line
-            message += f'Final score: {away_team} {away_score} - {home_team} {home_score}\n'
+                diff_parity = 'odd'
+                drops_message = f'{away_team} drops {away_player}. {home_team} drops {home_player}.'
+            
+            away_final_score, away_adjustment_line = get_point_bonus_message(away_team, away_initial_score)
+            home_final_score, home_adjustment_line = get_point_bonus_message(home_team, home_initial_score)
+            message += message_template.format(away=away_team,
+                                               home=home_team,
+                                               away_initial=away_initial_score,
+                                               home_initial=home_initial_score,
+                                               diff=score_difference,
+                                               diff_parity=diff_parity,
+                                               drops=drops_message,
+                                               away_adjustment=away_adjustment_line,
+                                               home_adjustment=home_adjustment_line,
+                                               away_final=away_final_score,
+                                               home_final=home_final_score)
+
         print('Done checking and dropping players.')
         return message
 
@@ -624,7 +684,7 @@ class Vermillion_Throw_Rug_Runner:
         past_periods, current_scoring_period, team_dict = self.get_basic_info()
         last_matchup_period = max(past_periods)
         last_matchup_last_scoring_period = past_periods[last_matchup_period]
-        if current_scoring_period == last_matchup_last_scoring_period + 1:
+        if current_scoring_period == last_matchup_last_scoring_period + 1 or True:
             print('################ Start of matchup. ################')
             last_week_results_message = self.last_week_results(last_matchup_last_scoring_period, last_matchup_period, current_scoring_period, team_dict)
             _, stat_updates_message, _ = self.update_stat_points(last_matchup_period + 1)
