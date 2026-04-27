@@ -67,6 +67,7 @@ jobs:
         fi
         python vtr_runner.py $args -s $SWID -e $ESPN_S2
     - name: Commit matchup settings
+      continue-on-error: true
       run: |
         git add data/matchup_settings.json
         git commit -m 'Automatic update of matchup settings.'
