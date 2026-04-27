@@ -1,9 +1,7 @@
-__**POINT UPDATES FOR MATCHUP {matchup}**__  
-  
+__**POINT UPDATES FOR MATCHUP {matchup}**__
+
 The following stats have been removed for this matchup:  
-  
-{removed}  
-  
+{removed}
+
 The following stats have had their points doubled for this matchup:  
-  
 {doubled}

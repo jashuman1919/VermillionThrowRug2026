@@ -2,6 +2,7 @@
 
 import json
 import requests
+from discord import Intents, Client
 from random import random, shuffle, sample
 from datetime import date, datetime, timezone
 from copy import deepcopy
@@ -66,7 +67,7 @@ def parse_args():
                         help='Disable player transactions.')
 
     args = parser.parse_args()
-    
+
     print('################ Arguments ################')
     print(f'Debug: {args.debug}')
     print(f'Disable Player Transactions: {args.disable_player_transactions}')
@@ -171,7 +172,7 @@ def get_point_bonus_message(team, score):
     else:
         score = round(score - 100, 1)
         return score, f'{team} score starts with an odd number, so incurs 100-point penalty; Ends at {score}.'
-    
+
 def get_score_adjustment(team_data, settings, reason):
     current_adjustment = team_data['adjustment']
     current_score = team_data['totalPoints'] - current_adjustment
@@ -251,20 +252,20 @@ def find_necessary_transactions(players, pos_quantities, results=None, assignmen
                 find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
                 del assignments[id]
     find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
-    
+
     if idx == 0:
         percent_owned_dict = {p['playerId']: p['playerPoolEntry']['player']['ownership']['percentOwned'] for p in players}
         min_dropped_players = min(len(r[1]) for r in results)
         acceptable_results = [r for r in results if len(r[1]) == min_dropped_players]
         best_result = min(acceptable_results, key=lambda x: sum(percent_owned_dict[p] for p in x[1]))
         return best_result
-        
+
     return {}, set(), {}
 
 def setup_directories():
     path = Path('output')
     path.mkdir(exist_ok=True)
-    
+
     path = Path('debug')
     path.mkdir(exist_ok=True)
 
@@ -278,8 +279,15 @@ class Mock_Http_Response:
         return json.loads(self.data)
 
 class Vermillion_Throw_Rug_Runner:
-    def __init__(self, cookies, debug, disable_player_transactions):
+    def __init__(self,
+                 cookies,
+                 discord_token,
+                 discord_channel,
+                 debug,
+                 disable_player_transactions):
         self.cookies = cookies
+        self.discord_token = discord_token
+        self.discord_channel = discord_channel
         self.debug = debug
         self.disable_player_transactions = disable_player_transactions
 
@@ -299,7 +307,7 @@ class Vermillion_Throw_Rug_Runner:
             if response.ok:
                 break
         return response
-        
+
     def send_email(self, recipient, subject, message):
         payload = {'content': message,
                    'subject': subject,
@@ -308,7 +316,7 @@ class Vermillion_Throw_Rug_Runner:
         payload_str = json.dumps(payload)
         response = self.http_request(EMAIL_URL, data=payload_str)
         return response
-    
+
     def update_stat_points(self, matchup_period_id):
         print('################ Updating stat point values. ################')
         with open('data/default_stats_scores.json') as f:
@@ -323,7 +331,7 @@ class Vermillion_Throw_Rug_Runner:
 
         response = self.http_request(SETTINGS_UPDATE_URL, data=updated_scores_str)
         message, removed_str, doubled_str = point_update_message(default_scores, updated_scores, matchup_period_id)
-    
+
         if response.ok:
             print('Success updating stat point values.')
             items_dict = {item['statId']: item['points'] for item in items}
@@ -342,7 +350,7 @@ class Vermillion_Throw_Rug_Runner:
             print(f'  Saving stat point value update payload to file: {filename}')
             print(f'  Manual stat removal:\n{removed_str}')
             print(f'  Manual stat updates:\n{doubled_str}')
-    
+
         # email_subject = f'Vermillion Throw Rug point changes {date.today()}'
         # if response.ok:
         #     print('Success updating points. Sending email.')
@@ -354,11 +362,11 @@ class Vermillion_Throw_Rug_Runner:
         #         print(f'WARNING: Unable to send email (status code {response.status_code}).')
         # else:
         #     print(f'WARNING: Unable to update points (status code {response.status_code}).')
-    
+
         print('Done updating stat point values')
-    
-        return updated_scores, message, response
-    
+
+        return updated_scores, message.split('\n\n'), response
+
     def get_box_scores(self, scoring_period, matchup_period):
         url = BOX_SCORE_URL.format(scoring_period=scoring_period)
         filter = '{"schedule":{"filterMatchupPeriodIds":{"value":[' + str(matchup_period) + ']}}}'
@@ -366,13 +374,13 @@ class Vermillion_Throw_Rug_Runner:
         response = self.http_request(url, headers)
         data = response.json()
         return data
-    
+
     def recalculate_scores(self, past_periods, team_dict):
         print('################ Recalculating scores for past matchups. ################')
         print(f'Matchups: {list(past_periods)}')
         with open('data/matchup_settings.json') as f:
             matchup_settings = json.load(f)
-    
+
         adjustments = []
         adjustments_debug = {}
         now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
@@ -397,7 +405,7 @@ class Vermillion_Throw_Rug_Runner:
                     print(f'Recalculated score and adjustments for matchup {id}.')
                 else:
                     print(f'Recalculated score for matchup {id}. No adjustments required.')
-        
+
         if len(adjustments) > 0:
             response = self.http_request(ADJUST_SCORE_URL, data=json.dumps(adjustments))
             if response.ok:
@@ -418,9 +426,9 @@ class Vermillion_Throw_Rug_Runner:
                         print(f'        {matchup["home"]}: {matchup["home_adjustment"]}')
         else:
             print('No adjustments needed.')
-    
+
         print('Done recalculating scores for past matchups.')
-    
+
     def get_basic_info(self):
         print('################ Getting basic league info. ################')
         response = self.http_request(SCHEDULE_URL)
@@ -435,7 +443,7 @@ class Vermillion_Throw_Rug_Runner:
                 scoring_periods = [int(p) for p in points_by_scoring_period]
                 if len(scoring_periods) > 0 and all(p < current_scoring_period for p in scoring_periods):
                     past_periods[matchup_period] = max(scoring_periods)
-    
+
         teams = data['teams']
         team_dict = {t['id']: t['abbrev'] for t in teams}
         team_str = '  ' + '\n  '.join(f'{k}: {v}' for k, v in team_dict.items())
@@ -444,14 +452,14 @@ class Vermillion_Throw_Rug_Runner:
         print(f'Teams:\n{team_str}')
         print('Done getting basic league info.')
         return past_periods, current_scoring_period, team_dict
-    
+
     def drop_best_player(self, team, current_scoring_period, team_dict):
         team_id = team['teamId']
         players = team['rosterForMatchupPeriod']['entries']
         player_scores = {p['playerPoolEntry']['id']: (p['playerPoolEntry']['player']['fullName'], p['playerPoolEntry']['player']['stats'][0]['appliedTotal']) for p in players}
         best_player_id = max(player_scores, key=lambda x: player_scores[x][1])
         best_player_name = player_scores[best_player_id][0]
-    
+
         payload = {'isLeagueManager': True,
                    'teamId': team_id,
                    'type': 'ROSTER',
@@ -471,11 +479,11 @@ class Vermillion_Throw_Rug_Runner:
         else:
             print(f'Would have dropped {best_player_name} from {team_dict[team_id]}.')
         return best_player_name
-    
+
     def last_week_results(self, scoring_period, matchup_period, current_scoring_period, team_dict):
         print(f'################ Checking and dropping best players from matchup period {matchup_period}. ################')
 
-        message = f'__**WEEK {matchup_period} RESULTS/UPDATES**__  \n\n'
+        messages = [f'__**MATCHUP {matchup_period} RESULTS/UPDATES**__']
         with open('data/matchup_message_template.txt') as f:
             message_template = f.read()
 
@@ -488,7 +496,7 @@ class Vermillion_Throw_Rug_Runner:
             away_initial_score = matchup['away']['totalPoints']
             home_initial_score = matchup['home']['totalPoints']
             score_difference = round(abs(home_initial_score - away_initial_score), 1)
-            
+
             if first_digit_even(score_difference):
                 diff_parity = 'even'
                 drops_message = 'So no drops.'
@@ -497,23 +505,23 @@ class Vermillion_Throw_Rug_Runner:
                 home_player = self.drop_best_player(matchup['home'], current_scoring_period, team_dict)
                 diff_parity = 'odd'
                 drops_message = f'{away_team} drops {away_player}. {home_team} drops {home_player}.'
-            
+
             away_final_score, away_adjustment_line = get_point_bonus_message(away_team, away_initial_score)
             home_final_score, home_adjustment_line = get_point_bonus_message(home_team, home_initial_score)
-            message += message_template.format(away=away_team,
-                                               home=home_team,
-                                               away_initial=away_initial_score,
-                                               home_initial=home_initial_score,
-                                               diff=score_difference,
-                                               diff_parity=diff_parity,
-                                               drops=drops_message,
-                                               away_adjustment=away_adjustment_line,
-                                               home_adjustment=home_adjustment_line,
-                                               away_final=away_final_score,
-                                               home_final=home_final_score)
+            messages.append(message_template.format(away=away_team,
+                                                    home=home_team,
+                                                    away_initial=away_initial_score,
+                                                    home_initial=home_initial_score,
+                                                    diff=score_difference,
+                                                    diff_parity=diff_parity,
+                                                    drops=drops_message,
+                                                    away_adjustment=away_adjustment_line,
+                                                    home_adjustment=home_adjustment_line,
+                                                    away_final=away_final_score,
+                                                    home_final=home_final_score))
 
         print('Done checking and dropping players.')
-        return message
+        return messages
 
     def select_players(self, pos, num):
         num_options = round(num * 1.5 + 3)
@@ -524,7 +532,7 @@ class Vermillion_Throw_Rug_Runner:
         players = sample(data['players'], num)
         ids = [p['id'] for p in players]
         return ids
-    
+
     def get_roster(self, team_ids):
         roster_for_team_id = '&'.join(f'rosterForTeamId={id}' for id in team_ids)
         url = ROSTER_URL.format(roster_for_team_id=roster_for_team_id)
@@ -549,7 +557,7 @@ class Vermillion_Throw_Rug_Runner:
 
         teams = self.get_roster(bot_ids)
         shuffle(teams)
-        
+
         for team in teams:
             team_id = team['id']
             print(f'Team ID {team_id}')
@@ -635,7 +643,7 @@ class Vermillion_Throw_Rug_Runner:
                         else:
                             print(f'WARNING: Failed to add player {id} to bot team ID {team_id} (status code {response.status_code}).')
                             failed_add_payloads.append(payload)
-    
+
                 if len(failed_add_payloads) > 0:
                     date_str = str(date.today())
                     filename = f'debug/bot_{team_id}_adds_{date_str}.json'
@@ -678,24 +686,43 @@ class Vermillion_Throw_Rug_Runner:
             else:
                 print(f'No lineup arrangement needed for bot team ID {team_id}.')
 
+    def send_messages(self, messages):
+        print('################ Sending Discord Messages. ################')
+        print(f'Sending {len(messages)} total messages.')
+        intents = Intents.default()
+        client = Client(intents=intents)
+
+        @client.event
+        async def on_ready():
+            channel = client.get_channel(self.discord_channel)
+
+            for message in messages:
+                await channel.send(message)
+
+            await client.close()
+
+        client.run(self.discord_token)
+        print('Done sending discord messages')
+
     def run(self):
         setup_directories()
-        
+
         past_periods, current_scoring_period, team_dict = self.get_basic_info()
         last_matchup_period = max(past_periods)
         last_matchup_last_scoring_period = past_periods[last_matchup_period]
-        if current_scoring_period == last_matchup_last_scoring_period + 1 or True:
+        messages = []
+        if current_scoring_period == last_matchup_last_scoring_period + 1:
             print('################ Start of matchup. ################')
-            last_week_results_message = self.last_week_results(last_matchup_last_scoring_period, last_matchup_period, current_scoring_period, team_dict)
-            _, stat_updates_message, _ = self.update_stat_points(last_matchup_period + 1)
+            last_week_results_messages = self.last_week_results(last_matchup_last_scoring_period, last_matchup_period, current_scoring_period, team_dict)
+            _, stat_updates_messages, _ = self.update_stat_points(last_matchup_period + 1)
 
             date_str = str(date.today())
             filename = f'output/last_week_results_{date_str}.txt'
             with open(filename, 'w') as f:
-                f.write(last_week_results_message)
+                f.write('\n\n'.join(last_week_results_messages))
             filename = f'output/stat_updates_{date_str}.txt'
             with open(filename, 'w') as f:
-                f.write(stat_updates_message)
+                f.write('\n\n'.join(stat_updates_messages))
         else:
             print('################ Not start of matchup. ################')
             past_periods = {k: v for k, v in past_periods.items() if last_matchup_period - k < 1}
@@ -703,8 +730,20 @@ class Vermillion_Throw_Rug_Runner:
         self.recalculate_scores(past_periods, team_dict)
         self.bot_transactions(current_scoring_period)
 
+        messages = last_week_results_messages + stat_updates_messages
+        self.send_messages(messages)
+
 if __name__ == '__main__':
     ARGS = parse_args()
     COOKIES = build_cookies(ARGS)
-    RUNNER = Vermillion_Throw_Rug_Runner(COOKIES, ARGS.debug, ARGS.disable_player_transactions)
+    if ARGS.discord_file is not None:
+        with open(ARGS.discord_file) as f:
+            DISCORD_TOKEN = f.read()
+    else:
+        DISCORD_TOKEN = ARGS.discord_token
+    RUNNER = Vermillion_Throw_Rug_Runner(COOKIES,
+                                         DISCORD_TOKEN,
+                                         ARGS.discord_channel,
+                                         ARGS.debug,
+                                         ARGS.disable_player_transactions)
     RUNNER.run()
