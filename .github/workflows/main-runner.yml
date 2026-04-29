@@ -23,7 +23,7 @@ on:
             - false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -32,6 +32,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -64,6 +68,12 @@ jobs:
           flags="$flags -p"
         fi
         python vtr_runner.py $flags --swid $SWID --espn-s2 $ESPN_S2 --discord-token $DISCORD_TOKEN --discord-channel $DISCORD_CHANNEL_ID
+    - name: Commit matchup settings
+      continue-on-error: true
+      run: |
+        git add data/matchup_settings.json
+        git commit -m 'Automatic update of matchup settings.'
+        git push
     - name: Artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -71,3 +81,4 @@ jobs:
         path: |
           output
           debug
+          data/matchup_settings.json
