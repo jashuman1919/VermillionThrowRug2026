@@ -35,23 +35,25 @@ ROSTER_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/20
 PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/700691512?view=kona_player_info'
 
 # Position quantities for full roster
-BATTER_POS_QUANTITIES = {0: 1,  # Catcher
-                         1: 1,  # First Base
-                         2: 1,  # Second Base
-                         3: 1,  # Third Base
-                         4: 1,  # Shortstop
-                         8: 1,  # Outfield
-                         9: 1,  # Outfield
-                         10: 1, # Outfield
-                         11: 1} # Utility
-PITCHER_POS_QUANTITIES = {14: 5,  # Starting Pitcher
-                          15: 5}  # Relief Pitcher
+BATTER_POS_QUANTITIES = {
+    0: 1,  # Catcher
+    1: 1,  # First Base
+    2: 1,  # Second Base
+    3: 1,  # Third Base
+    4: 1,  # Shortstop
+    8: 1,  # Outfield
+    9: 1,  # Outfield
+    10: 1,  # Outfield
+    11: 1,
+}  # Utility
+PITCHER_POS_QUANTITIES = {14: 5, 15: 5}  # Starting Pitcher  # Relief Pitcher
 
 # Maximum probability of a bot dropping a player
 MAX_DROP_PROB = 0.05
 
 # Team IDs for bot teams
 BOT_IDS = [3, 4]
+
 
 def parse_args():
     """
@@ -71,33 +73,33 @@ def parse_args():
 
     parser = ArgumentParser(description="Vermillion Throw Rug Runner 2026")
 
-    parser.add_argument('--cookie-file',
-                        default=None,
-                        help='File containing cookie data.')
-    parser.add_argument('--swid',
-                        default='',
-                        help='ESPN SWID. Use if not using cookie file.')
-    parser.add_argument('--espn-s2',
-                        default='',
-                        help='ESPN-S2. Use if not using cookie file.')
-    parser.add_argument('--discord-file',
-                        default=None,
-                        help='File containing discord token.')
-    parser.add_argument('--discord-token',
-                        default='',
-                        help='Discord token. Use if not using discord file.')
-    parser.add_argument('--discord-channel',
-                        type=int,
-                        default=None,
-                        help='Discord channel ID.')
-    parser.add_argument('-d',
-                        '--debug',
-                        action='store_true',
-                        help='Debug.')
-    parser.add_argument('-p',
-                        '--disable_player_transactions',
-                        action='store_true',
-                        help='Disable player transactions.')
+    parser.add_argument(
+        '--cookie-file', default=None, help='File containing cookie data.'
+    )
+    parser.add_argument(
+        '--swid', default='', help='ESPN SWID. Use if not using cookie file.'
+    )
+    parser.add_argument(
+        '--espn-s2', default='', help='ESPN-S2. Use if not using cookie file.'
+    )
+    parser.add_argument(
+        '--discord-file', default=None, help='File containing discord token.'
+    )
+    parser.add_argument(
+        '--discord-token',
+        default='',
+        help='Discord token. Use if not using discord file.',
+    )
+    parser.add_argument(
+        '--discord-channel', type=int, default=None, help='Discord channel ID.'
+    )
+    parser.add_argument('-d', '--debug', action='store_true', help='Debug.')
+    parser.add_argument(
+        '-p',
+        '--disable_player_transactions',
+        action='store_true',
+        help='Disable player transactions.',
+    )
 
     args = parser.parse_args()
 
@@ -123,15 +125,24 @@ def parse_args():
 
     # Validate args.
     if args.cookie_file is None and (args.swid == '' or args.espn_s2 == ''):
-        raise ValueError('You must either provide cookie file (--cookie-file) or both SWID (--swid) and ESPN-S2 (--espn-s2).')
+        raise ValueError(
+            'You must either provide cookie file (--cookie-file) or both SWID (--swid) and ESPN-S2 (--espn-s2).'
+        )
     if args.cookie_file is not None and (args.swid != '' or args.espn_s2 != ''):
-        raise ValueError('You may not provide cookie file (--cookie-file) and either SWID (--swid) or ESPN-S2 (--espn-s2).')
+        raise ValueError(
+            'You may not provide cookie file (--cookie-file) and either SWID (--swid) or ESPN-S2 (--espn-s2).'
+        )
     if args.discord_file is None and args.discord_token == '':
-        raise ValueError('You must either provide discord file (--discord-file) or discord token (--discord-token).')
+        raise ValueError(
+            'You must either provide discord file (--discord-file) or discord token (--discord-token).'
+        )
     if args.discord_file is not None and args.discord_token != '':
-        raise ValueError('You may not provide discord file (--discord_file) and discord token (--discord-token).')
+        raise ValueError(
+            'You may not provide discord file (--discord_file) and discord token (--discord-token).'
+        )
 
     return args
+
 
 def build_cookies(args):
     """
@@ -147,10 +158,8 @@ def build_cookies(args):
     if args.cookie_file is not None:
         with open(args.cookie_file) as f:
             return json.load(f)
-    return {
-        'SWID': args.swid,
-        'espn_s2': args.espn_s2
-    }
+    return {'SWID': args.swid, 'espn_s2': args.espn_s2}
+
 
 def first_digit_even(number):
     """
@@ -164,7 +173,8 @@ def first_digit_even(number):
     """
 
     first_digit = int(str(abs(number))[0])
-    return (first_digit % 2 == 0)
+    return first_digit % 2 == 0
+
 
 def point_update_email_content(default_scores, updated_scores):
     """
@@ -190,8 +200,14 @@ def point_update_email_content(default_scores, updated_scores):
     with open('data/email_content.txt') as f:
         email_content = f.read()
 
-    default_dict = {str(s['statId']): s['points'] for s in default_scores['scoringSettings']['scoringItems']}
-    updated_dict = {str(s['statId']): s['points'] for s in updated_scores['scoringSettings']['scoringItems']}
+    default_dict = {
+        str(s['statId']): s['points']
+        for s in default_scores['scoringSettings']['scoringItems']
+    }
+    updated_dict = {
+        str(s['statId']): s['points']
+        for s in updated_scores['scoringSettings']['scoringItems']
+    }
 
     for id, stat in stat_ids.items():
         if id in updated_dict:
@@ -202,10 +218,11 @@ def point_update_email_content(default_scores, updated_scores):
     removed_str = '    ' + '\n    '.join(removed)
     doubled_strs = [f'{stat}: ({old} -> {new})' for stat, old, new in doubled]
     doubled_str = '    ' + '\n    '.join(doubled_strs)
-    email_content = email_content.format(date=date.today(),
-                                         removed=removed_str,
-                                         doubled=doubled_str)
+    email_content = email_content.format(
+        date=date.today(), removed=removed_str, doubled=doubled_str
+    )
     return email_content, removed_str, doubled_str
+
 
 def point_update_message(default_scores, updated_scores, matchup):
     """
@@ -232,8 +249,14 @@ def point_update_message(default_scores, updated_scores, matchup):
     with open('data/stat_updates_message_template.txt') as f:
         message_template = f.read()
 
-    default_dict = {str(s['statId']): s['points'] for s in default_scores['scoringSettings']['scoringItems']}
-    updated_dict = {str(s['statId']): s['points'] for s in updated_scores['scoringSettings']['scoringItems']}
+    default_dict = {
+        str(s['statId']): s['points']
+        for s in default_scores['scoringSettings']['scoringItems']
+    }
+    updated_dict = {
+        str(s['statId']): s['points']
+        for s in updated_scores['scoringSettings']['scoringItems']
+    }
 
     for id, stat in stat_ids.items():
         if id in updated_dict:
@@ -244,10 +267,11 @@ def point_update_message(default_scores, updated_scores, matchup):
     removed_str = '    ' + '\n    '.join(removed)
     doubled_strs = [f'{stat}: ({old} -> {new})' for stat, old, new in doubled]
     doubled_str = '    ' + '\n    '.join(doubled_strs)
-    message = message_template.format(matchup=matchup,
-                                      removed=removed_str,
-                                      doubled=doubled_str)
+    message = message_template.format(
+        matchup=matchup, removed=removed_str, doubled=doubled_str
+    )
     return message, removed_str, doubled_str
+
 
 def get_point_bonus_message(team, score):
     """
@@ -265,10 +289,17 @@ def get_point_bonus_message(team, score):
 
     if first_digit_even(score):
         score = round(score + 100, 1)
-        return score, f'{team} score starts with an even number, so receives 100-point bonus; Ends at {score}.'
+        return (
+            score,
+            f'{team} score starts with an even number, so receives 100-point bonus; Ends at {score}.',
+        )
     else:
         score = round(score - 100, 1)
-        return score, f'{team} score starts with an odd number, so incurs 100-point penalty; Ends at {score}.'
+        return (
+            score,
+            f'{team} score starts with an odd number, so incurs 100-point penalty; Ends at {score}.',
+        )
+
 
 def get_score_adjustment(team_data, settings, reason):
     """
@@ -291,7 +322,11 @@ def get_score_adjustment(team_data, settings, reason):
     score = 0
     for player in team_data['rosterForMatchupPeriod']['entries']:
         stats = player['playerPoolEntry']['player']['stats'][0]['stats']
-        score += sum(settings.get(id, 0) * val for id, val in stats.items() if isinstance(val, (int, float)))
+        score += sum(
+            settings.get(id, 0) * val
+            for id, val in stats.items()
+            if isinstance(val, (int, float))
+        )
     score = round(score, 1)
     if first_digit_even(score):
         score += 100
@@ -300,10 +335,13 @@ def get_score_adjustment(team_data, settings, reason):
         score -= 100
         reason = reason.format(adjustment="odd-first-digit penalty (-100)")
     adjustment = round(score - current_score, 1)
-    adjustment_dict = {'adjustment': adjustment,
-                       'adjustmentReason': reason,
-                       'teamId': team_id}
+    adjustment_dict = {
+        'adjustment': adjustment,
+        'adjustmentReason': reason,
+        'teamId': team_id,
+    }
     return adjustment_dict, (adjustment != current_adjustment)
+
 
 def player_filter(pos, num):
     """
@@ -319,36 +357,27 @@ def player_filter(pos, num):
 
     return {
         'players': {
-            'filterStatus': {
-                'value': [
-                    'FREEAGENT'
-                ]
-            },
-            'filterInjured': {
-                'value': False
-            },
-            'filterSlotIds': {
-                'value': [
-                    pos
-                ]
-            },
+            'filterStatus': {'value': ['FREEAGENT']},
+            'filterInjured': {'value': False},
+            'filterSlotIds': {'value': [pos]},
             'limit': num,
             'offset': 0,
             'sortAppliedStatTotal': {
                 'sortAsc': False,
                 'sortPriority': 1,
-                'value': '002026'
+                'value': '002026',
             },
             'filterStatsForTopScoringPeriodIds': {
                 'value': 1,
-                'additionalValue': [
-                    '002026'
-                ]
-            }
+                'additionalValue': ['002026'],
+            },
         }
     }
 
-def find_necessary_transactions(players, pos_quantities, results=None, assignments=None, idx=0):
+
+def find_necessary_transactions(
+    players, pos_quantities, results=None, assignments=None, idx=0
+):
     """
     Recursively find optimal player assignments to positions, minimizing drops.
 
@@ -391,19 +420,27 @@ def find_necessary_transactions(players, pos_quantities, results=None, assignmen
         if position in pos_quantities and pos_quantities[position] > 0:
             if list(assignments.values()).count(position) < pos_quantities[position]:
                 assignments[id] = position
-                find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
+                find_necessary_transactions(
+                    players, pos_quantities, results, assignments, idx + 1
+                )
                 del assignments[id]
     find_necessary_transactions(players, pos_quantities, results, assignments, idx + 1)
 
     # Terminal case: after exploring all possibilities, select optimal result.
     if idx == 0:
-        percent_owned_dict = {p['playerId']: p['playerPoolEntry']['player']['ownership']['percentOwned'] for p in players}
+        percent_owned_dict = {
+            p['playerId']: p['playerPoolEntry']['player']['ownership']['percentOwned']
+            for p in players
+        }
         min_dropped_players = min(len(r[1]) for r in results)
         acceptable_results = [r for r in results if len(r[1]) == min_dropped_players]
-        best_result = min(acceptable_results, key=lambda x: sum(percent_owned_dict[p] for p in x[1]))
+        best_result = min(
+            acceptable_results, key=lambda x: sum(percent_owned_dict[p] for p in x[1])
+        )
         return best_result
 
     return {}, set(), {}
+
 
 def setup_directories():
     """
@@ -415,6 +452,7 @@ def setup_directories():
 
     path = Path('debug')
     path.mkdir(exist_ok=True)
+
 
 class Mock_Http_Response:
     """
@@ -430,6 +468,7 @@ class Mock_Http_Response:
     def json(self):
         return json.loads(self.data)
 
+
 class Vermillion_Throw_Rug_Runner:
     """
     Main class for running league operations.
@@ -441,12 +480,14 @@ class Vermillion_Throw_Rug_Runner:
     - Sends Discord messages with matchup results, matchup changes based on gimmicks, and scoring setting changes.
     """
 
-    def __init__(self,
-                 cookies,
-                 discord_token,
-                 discord_channel,
-                 debug,
-                 disable_player_transactions):
+    def __init__(
+        self,
+        cookies,
+        discord_token,
+        discord_channel,
+        debug,
+        disable_player_transactions,
+    ):
         """
         Initialize the runner with authentication and configuration.
 
@@ -489,7 +530,9 @@ class Vermillion_Throw_Rug_Runner:
                     response = Mock_Http_Response(False, 400, '{}')
                     break
                 else:
-                    response = requests.post(url, cookies=self.cookies, headers=headers, data=data)
+                    response = requests.post(
+                        url, cookies=self.cookies, headers=headers, data=data
+                    )
             if response.ok:
                 break
         return response
@@ -507,10 +550,12 @@ class Vermillion_Throw_Rug_Runner:
             requests.Response: API response
         """
 
-        payload = {'content': message,
-                   'subject': subject,
-                   'type': 'EMAIL',
-                   'viewableBy': [recipient]}
+        payload = {
+            'content': message,
+            'subject': subject,
+            'type': 'EMAIL',
+            'viewableBy': [recipient],
+        }
         payload_str = json.dumps(payload)
         response = self.http_request(EMAIL_URL, data=payload_str)
         return response
@@ -544,13 +589,17 @@ class Vermillion_Throw_Rug_Runner:
         for item in items:
             item['points'] = round(item['points'] * 2, 1)  # Double their point values.
         updated_scores['scoringSettings']['scoringItems'] = items
-        updated_scores_str = json.dumps(updated_scores) # Generate a JSON string for API request.
+        updated_scores_str = json.dumps(
+            updated_scores
+        )  # Generate a JSON string for API request.
 
         # Scoring settings API request.
         response = self.http_request(SETTINGS_UPDATE_URL, data=updated_scores_str)
 
         # Generate scoring update message.
-        message, removed_str, doubled_str = point_update_message(default_scores, updated_scores, matchup_period_id)
+        message, removed_str, doubled_str = point_update_message(
+            default_scores, updated_scores, matchup_period_id
+        )
 
         if response.ok:
             # On successful update, save the new scoring settings.
@@ -558,13 +607,15 @@ class Vermillion_Throw_Rug_Runner:
             items_dict = {item['statId']: item['points'] for item in items}
             if not self.debug:
                 with open('data/matchup_settings.json') as f:
-                    matchup_settings = json.load(f) 
+                    matchup_settings = json.load(f)
                 matchup_settings[str(matchup_period_id)] = items_dict
                 with open('data/matchup_settings.json', 'w') as f:
                     json.dump(matchup_settings, f, indent=2)
         else:
             # ON failure, print warning, save the API call payload, and print the intended changes.
-            print(f'WARNING: Unable to update point values (status code {response.status_code}).')
+            print(
+                f'WARNING: Unable to update point values (status code {response.status_code}).'
+            )
             date_str = str(date.today())
             filename = f'debug/stat_point_changes_{date_str}.json'
             with open(filename, 'w') as f:
@@ -602,7 +653,11 @@ class Vermillion_Throw_Rug_Runner:
         """
 
         url = BOX_SCORE_URL.format(scoring_period=scoring_period)
-        filter = '{"schedule":{"filterMatchupPeriodIds":{"value":[' + str(matchup_period) + ']}}}'
+        filter = (
+            '{"schedule":{"filterMatchupPeriodIds":{"value":['
+            + str(matchup_period)
+            + ']}}}'
+        )
         headers = {'x-fantasy-filter': filter}
         response = self.http_request(url, headers)
         data = response.json()
@@ -617,7 +672,9 @@ class Vermillion_Throw_Rug_Runner:
             team_dict: Dict mapping team IDs to team abbreviations
         """
 
-        print('################ Recalculating scores for past matchups. ################')
+        print(
+            '################ Recalculating scores for past matchups. ################'
+        )
         print(f'Matchups: {list(past_periods)}')
 
         # Get scoring settings for past matchups.
@@ -637,20 +694,30 @@ class Vermillion_Throw_Rug_Runner:
             settings = matchup_settings[str(matchup_period)]
             for matchup in data['schedule']:
                 id = matchup['id']
-                home_adjustment, home_adjustment_changed = get_score_adjustment(matchup['home'], settings, reason)
-                away_adjustment, away_adjustment_changed = get_score_adjustment(matchup['away'], settings, reason)
+                home_adjustment, home_adjustment_changed = get_score_adjustment(
+                    matchup['home'], settings, reason
+                )
+                away_adjustment, away_adjustment_changed = get_score_adjustment(
+                    matchup['away'], settings, reason
+                )
                 if home_adjustment_changed or away_adjustment_changed:
-                    adjustments.append({'away': away_adjustment,
-                                        'home': home_adjustment,
-                                        'id': id})
-                    adjustments_debug[matchup_period].append({'id': id,
-                                                              'away': team_dict[away_adjustment['teamId']],
-                                                              'home': team_dict[home_adjustment['teamId']],
-                                                              'away_adjustment': away_adjustment['adjustment'],
-                                                              'home_adjustment': home_adjustment['adjustment']})
+                    adjustments.append(
+                        {'away': away_adjustment, 'home': home_adjustment, 'id': id}
+                    )
+                    adjustments_debug[matchup_period].append(
+                        {
+                            'id': id,
+                            'away': team_dict[away_adjustment['teamId']],
+                            'home': team_dict[home_adjustment['teamId']],
+                            'away_adjustment': away_adjustment['adjustment'],
+                            'home_adjustment': home_adjustment['adjustment'],
+                        }
+                    )
                     print(f'Recalculated score and adjustments for matchup {id}.')
                 else:
-                    print(f'Recalculated score for matchup {id}. No adjustments required.')
+                    print(
+                        f'Recalculated score for matchup {id}. No adjustments required.'
+                    )
 
         # Make API request if any adjustments are needed.
         if len(adjustments) > 0:
@@ -659,7 +726,9 @@ class Vermillion_Throw_Rug_Runner:
                 print('Adjusted all past scores.')
             else:
                 # On failure, print warning, save the API call payload, and print the intended adjustments.
-                print(f'WARNING: Failed to adjust past scores (status code {response.status_code}).')
+                print(
+                    f'WARNING: Failed to adjust past scores (status code {response.status_code}).'
+                )
                 date_str = str(date.today())
                 filename = f'debug/score_adjustments_{date_str}.json'
                 with open(filename, 'w') as f:
@@ -670,8 +739,12 @@ class Vermillion_Throw_Rug_Runner:
                     print(f'    Matchup period {period}:')
                     for matchup in matchups:
                         print(f'      Matchup {matchup["id"]}:')
-                        print(f'        {matchup["away"]}: {matchup["away_adjustment"]}')
-                        print(f'        {matchup["home"]}: {matchup["home_adjustment"]}')
+                        print(
+                            f'        {matchup["away"]}: {matchup["away_adjustment"]}'
+                        )
+                        print(
+                            f'        {matchup["home"]}: {matchup["home_adjustment"]}'
+                        )
         else:
             print('No adjustments needed.')
 
@@ -701,9 +774,13 @@ class Vermillion_Throw_Rug_Runner:
         for matchup in schedule:
             matchup_period = matchup['matchupPeriodId']
             if matchup_period not in past_periods:
-                points_by_scoring_period = matchup.get('home', {}).get('pointsByScoringPeriod', {})
+                points_by_scoring_period = matchup.get('home', {}).get(
+                    'pointsByScoringPeriod', {}
+                )
                 scoring_periods = [int(p) for p in points_by_scoring_period]
-                if len(scoring_periods) > 0 and all(p < current_scoring_period for p in scoring_periods):
+                if len(scoring_periods) > 0 and all(
+                    p < current_scoring_period for p in scoring_periods
+                ):
                     past_periods[matchup_period] = max(scoring_periods)
 
         # Build team dict mapping team IDs to abbreviations.
@@ -735,33 +812,45 @@ class Vermillion_Throw_Rug_Runner:
         # Determine the best player based on the matchup data.
         team_id = team['teamId']
         players = team['rosterForMatchupPeriod']['entries']
-        player_scores = {p['playerPoolEntry']['id']: (p['playerPoolEntry']['player']['fullName'], p['playerPoolEntry']['player']['stats'][0]['appliedTotal']) for p in players}
+        player_scores = {
+            p['playerPoolEntry']['id']: (
+                p['playerPoolEntry']['player']['fullName'],
+                p['playerPoolEntry']['player']['stats'][0]['appliedTotal'],
+            )
+            for p in players
+        }
         best_player_id = max(player_scores, key=lambda x: player_scores[x][1])
         best_player_name = player_scores[best_player_id][0]
 
         # API request
-        payload = {'isLeagueManager': True,
-                   'teamId': team_id,
-                   'type': 'ROSTER',
-                   'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
-                   'scoringPeriodId': current_scoring_period,
-                   'executionType': 'EXECUTE',
-                   'items': [{'playerId': best_player_id,
-                              'type': 'DROP',
-                              'fromTeamId': team_id}]}
+        payload = {
+            'isLeagueManager': True,
+            'teamId': team_id,
+            'type': 'ROSTER',
+            'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
+            'scoringPeriodId': current_scoring_period,
+            'executionType': 'EXECUTE',
+            'items': [
+                {'playerId': best_player_id, 'type': 'DROP', 'fromTeamId': team_id}
+            ],
+        }
         payload_str = json.dumps(payload)
         if not self.disable_player_transactions:
             response = self.http_request(TRANSACTION_URL, data=payload_str)
             if response.ok:
                 print(f'Dropped {best_player_name} from {team_dict[team_id]}.')
             else:
-                print(f'WARNING: Unable to drop {best_player_name} from {team_dict[team_id]} (status code {response.status_code}).')
+                print(
+                    f'WARNING: Unable to drop {best_player_name} from {team_dict[team_id]} (status code {response.status_code}).'
+                )
         else:
             print(f'Would have dropped {best_player_name} from {team_dict[team_id]}.')
 
         return best_player_name
 
-    def last_week_results(self, scoring_period, matchup_period, current_scoring_period, team_dict):
+    def last_week_results(
+        self, scoring_period, matchup_period, current_scoring_period, team_dict
+    ):
         """
         For each matchup, applies score adjustments based on first digit parity,
         and drops best players if score difference has odd first digit.
@@ -776,7 +865,9 @@ class Vermillion_Throw_Rug_Runner:
             list: Discord message strings
         """
 
-        print(f'################ Checking and dropping best players from matchup period {matchup_period}. ################')
+        print(
+            f'################ Checking and dropping best players from matchup period {matchup_period}. ################'
+        )
 
         # Setup message template
         messages = [f'__**MATCHUP {matchup_period} RESULTS/UPDATES**__']
@@ -800,27 +891,41 @@ class Vermillion_Throw_Rug_Runner:
                 drops_message = 'So no drops.'
             else:
                 # Drop players if score difference starts with odd digit.
-                away_player = self.drop_best_player(matchup['away'], current_scoring_period, team_dict)
-                home_player = self.drop_best_player(matchup['home'], current_scoring_period, team_dict)
+                away_player = self.drop_best_player(
+                    matchup['away'], current_scoring_period, team_dict
+                )
+                home_player = self.drop_best_player(
+                    matchup['home'], current_scoring_period, team_dict
+                )
                 diff_parity = 'odd'
-                drops_message = f'{away_team} drops {away_player}. {home_team} drops {home_player}.'
+                drops_message = (
+                    f'{away_team} drops {away_player}. {home_team} drops {home_player}.'
+                )
 
             # Get message lines for each team.
-            away_final_score, away_adjustment_line = get_point_bonus_message(away_team, away_initial_score)
-            home_final_score, home_adjustment_line = get_point_bonus_message(home_team, home_initial_score)
+            away_final_score, away_adjustment_line = get_point_bonus_message(
+                away_team, away_initial_score
+            )
+            home_final_score, home_adjustment_line = get_point_bonus_message(
+                home_team, home_initial_score
+            )
 
             # Add message for this matchup to the full list of messages.
-            messages.append(message_template.format(away=away_team,
-                                                    home=home_team,
-                                                    away_initial=away_initial_score,
-                                                    home_initial=home_initial_score,
-                                                    diff=score_difference,
-                                                    diff_parity=diff_parity,
-                                                    drops=drops_message,
-                                                    away_adjustment=away_adjustment_line,
-                                                    home_adjustment=home_adjustment_line,
-                                                    away_final=away_final_score,
-                                                    home_final=home_final_score))
+            messages.append(
+                message_template.format(
+                    away=away_team,
+                    home=home_team,
+                    away_initial=away_initial_score,
+                    home_initial=home_initial_score,
+                    diff=score_difference,
+                    diff_parity=diff_parity,
+                    drops=drops_message,
+                    away_adjustment=away_adjustment_line,
+                    home_adjustment=home_adjustment_line,
+                    away_final=away_final_score,
+                    home_final=home_final_score,
+                )
+            )
 
         print('Done checking and dropping players.')
         return messages
@@ -894,7 +999,13 @@ class Vermillion_Throw_Rug_Runner:
             print(f'Team ID {team_id}')
 
             # Sort players by total season points with current scoring system. Create drop probabilities according to rank within roster. Best player has 0 drop probability.
-            players = sorted(team['roster']['entries'], key=lambda x: x['playerPoolEntry']['player']['stats'][1]['appliedTotal'], reverse=True)
+            players = sorted(
+                team['roster']['entries'],
+                key=lambda x: x['playerPoolEntry']['player']['stats'][1][
+                    'appliedTotal'
+                ],
+                reverse=True,
+            )
             drop_probs = linspace(0, MAX_DROP_PROB, len(players))
 
             # Drop injured or suspended players, plus some random players.
@@ -902,18 +1013,36 @@ class Vermillion_Throw_Rug_Runner:
             for n, p in enumerate(players):
                 player = p['playerPoolEntry']['player']
                 drop_prob = drop_probs[n]
-                if player['injured'] or player['injuryStatus'] == 'SUSPENSION' or random() <= drop_prob:
+                if (
+                    player['injured']
+                    or player['injuryStatus'] == 'SUSPENSION'
+                    or random() <= drop_prob
+                ):
                     drops.append(player['id'])
 
             # Split batters and pitchers. Shohei counts as a batter because otherwise he's too annoying to deal with.
-            batters = [p for p in players if 12 in p['playerPoolEntry']['player']['eligibleSlots'] and p['playerId'] not in drops]
-            pitchers = [p for p in players if 12 not in p['playerPoolEntry']['player']['eligibleSlots'] and p['playerId'] not in drops]
+            batters = [
+                p
+                for p in players
+                if 12 in p['playerPoolEntry']['player']['eligibleSlots']
+                and p['playerId'] not in drops
+            ]
+            pitchers = [
+                p
+                for p in players
+                if 12 not in p['playerPoolEntry']['player']['eligibleSlots']
+                and p['playerId'] not in drops
+            ]
 
             # Generate position arrangements with backtracking algorithm, get necessary adds, drops, and position assignments.
             print('Arranging batters')
-            batter_adds, batter_drops, batter_assignments = find_necessary_transactions(batters, BATTER_POS_QUANTITIES)
+            batter_adds, batter_drops, batter_assignments = find_necessary_transactions(
+                batters, BATTER_POS_QUANTITIES
+            )
             print('Arranging pitchers')
-            pitcher_adds, pitcher_drops, pitcher_assignments = find_necessary_transactions(pitchers, PITCHER_POS_QUANTITIES)
+            pitcher_adds, pitcher_drops, pitcher_assignments = (
+                find_necessary_transactions(pitchers, PITCHER_POS_QUANTITIES)
+            )
             drops.extend(batter_drops)
             drops.extend(pitcher_drops)
             pos_adds = batter_adds | pitcher_adds
@@ -921,7 +1050,10 @@ class Vermillion_Throw_Rug_Runner:
 
             # Drops (Can be done all at once).
             if len(drops) > 0:
-                drop_items = [{'playerId': id, 'type': 'DROP', 'fromTeamId': team_id} for id in drops]
+                drop_items = [
+                    {'playerId': id, 'type': 'DROP', 'fromTeamId': team_id}
+                    for id in drops
+                ]
                 payload = {
                     'isLeagueManager': False,
                     'teamId': team_id,
@@ -929,7 +1061,7 @@ class Vermillion_Throw_Rug_Runner:
                     'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
                     'scoringPeriodId': scoring_period,
                     'executionType': 'EXECUTE',
-                    'items': drop_items
+                    'items': drop_items,
                 }
                 payload_str = json.dumps(payload)
                 if not self.disable_player_transactions:
@@ -938,7 +1070,9 @@ class Vermillion_Throw_Rug_Runner:
                         print(f'Completed drops for bot team ID {team_id}.')
                     else:
                         # On failure, print warning and save the API call payload.
-                        print(f'WARNING: Unable to perform drops for bot team ID {team_id} (status code {response.status_code}).')
+                        print(
+                            f'WARNING: Unable to perform drops for bot team ID {team_id} (status code {response.status_code}).'
+                        )
                         date_str = str(date.today())
                         filename = f'debug/bot_{team_id}_drops_{date_str}.json'
                         with open(filename, 'w') as f:
@@ -967,20 +1101,24 @@ class Vermillion_Throw_Rug_Runner:
                                     'playerId': id,
                                     'type': 'ADD',
                                     'toTeamId': team_id,
-                                    'toLineupSlotId': pos
+                                    'toLineupSlotId': pos,
                                 }
-                            ]
+                            ],
                         }
                         payload_str = json.dumps(payload)
                         if not self.disable_player_transactions:
-                            response = self.http_request(TRANSACTION_URL, data=payload_str)
+                            response = self.http_request(
+                                TRANSACTION_URL, data=payload_str
+                            )
                             if response.ok:
                                 # On success, add player to the list of position assignments.
                                 print(f'Added player {id} to bot team ID {team_id}.')
                                 assignments[id] = pos
                             else:
                                 # On failure, print warning and add API call payload to list of failed adds to save later.
-                                print(f'WARNING: Failed to add player {id} to bot team ID {team_id} (status code {response.status_code}).')
+                                print(
+                                    f'WARNING: Failed to add player {id} to bot team ID {team_id} (status code {response.status_code}).'
+                                )
                                 failed_add_payloads.append(payload)
 
             if sum(pos_adds.values()) == 0:
@@ -998,11 +1136,16 @@ class Vermillion_Throw_Rug_Runner:
             team = self.get_roster([team_id])[0]
             players = team['roster']['entries']
             current_pos_dict = {p['playerId']: p['lineupSlotId'] for p in players}
-            changed_assignments = {p: pos for p, pos in assignments.items() if pos != current_pos_dict[p]}
+            changed_assignments = {
+                p: pos for p, pos in assignments.items() if pos != current_pos_dict[p]
+            }
 
             # Lineup assignments
             if len(changed_assignments) > 0:
-                move_items = [{'playerId': p, 'type': 'LINEUP', 'toLineupSlotId': pos} for p, pos in changed_assignments.items()]
+                move_items = [
+                    {'playerId': p, 'type': 'LINEUP', 'toLineupSlotId': pos}
+                    for p, pos in changed_assignments.items()
+                ]
                 payload = {
                     'isLeagueManager': False,
                     'teamId': team_id,
@@ -1010,16 +1153,20 @@ class Vermillion_Throw_Rug_Runner:
                     'memberId': '{0D6FBE9B-65FC-4CD8-A147-25159559E959}',
                     'scoringPeriodId': scoring_period,
                     'executionType': 'EXECUTE',
-                    'items': move_items
+                    'items': move_items,
                 }
                 payload_str = json.dumps(payload)
                 if not self.disable_player_transactions:
                     response = self.http_request(TRANSACTION_URL, data=payload_str)
                     if response.ok:
-                        print(f'Successfully arranged lineup for bot team ID {team_id}.')
+                        print(
+                            f'Successfully arranged lineup for bot team ID {team_id}.'
+                        )
                     else:
                         # On failure, print warning and save the API call payload.
-                        print(f'WARNING: Failed to arrange lineup for bot team ID {team_id} (status code {response.status_code}).')
+                        print(
+                            f'WARNING: Failed to arrange lineup for bot team ID {team_id} (status code {response.status_code}).'
+                        )
                         date_str = str(date.today())
                         filename = f'debug/bot_{team_id}_lineup_{date_str}.json'
                         with open(filename, 'w') as f:
@@ -1083,8 +1230,15 @@ class Vermillion_Throw_Rug_Runner:
             # Generate messages to send to Discord.
 
             print('################ Start of matchup. ################')
-            last_week_results_messages = self.last_week_results(last_matchup_last_scoring_period, last_matchup_period, current_scoring_period, team_dict)
-            _, stat_updates_messages, _ = self.update_stat_points(last_matchup_period + 1)
+            last_week_results_messages = self.last_week_results(
+                last_matchup_last_scoring_period,
+                last_matchup_period,
+                current_scoring_period,
+                team_dict,
+            )
+            _, stat_updates_messages, _ = self.update_stat_points(
+                last_matchup_period + 1
+            )
 
             date_str = str(date.today())
             filename = f'output/last_week_results_{date_str}.txt'
@@ -1098,7 +1252,9 @@ class Vermillion_Throw_Rug_Runner:
             # Since ESPN stat corrections can only happen up to 7 days after a game, only the last matchup scores might need to be recalculated.
 
             print('################ Not start of matchup. ################')
-            past_periods = {k: v for k, v in past_periods.items() if last_matchup_period - k < 1}
+            past_periods = {
+                k: v for k, v in past_periods.items() if last_matchup_period - k < 1
+            }
 
         self.recalculate_scores(past_periods, team_dict)
         self.bot_transactions(current_scoring_period)
@@ -1106,13 +1262,14 @@ class Vermillion_Throw_Rug_Runner:
         messages = last_week_results_messages + stat_updates_messages
         self.send_messages(messages)
 
+
 if __name__ == '__main__':
     # Parse command-line arguments
     ARGS = parse_args()
-    
+
     # Build authentication cookies
     COOKIES = build_cookies(ARGS)
-    
+
     # Load Discord token
     if ARGS.discord_file is not None:
         with open(ARGS.discord_file) as f:
@@ -1121,9 +1278,11 @@ if __name__ == '__main__':
         DISCORD_TOKEN = ARGS.discord_token
 
     # Initialize and run the main runner.
-    RUNNER = Vermillion_Throw_Rug_Runner(COOKIES,
-                                         DISCORD_TOKEN,
-                                         ARGS.discord_channel,
-                                         ARGS.debug,
-                                         ARGS.disable_player_transactions)
+    RUNNER = Vermillion_Throw_Rug_Runner(
+        COOKIES,
+        DISCORD_TOKEN,
+        ARGS.discord_channel,
+        ARGS.debug,
+        ARGS.disable_player_transactions,
+    )
     RUNNER.run()
