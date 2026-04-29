@@ -3,3 +3,5 @@ output/*
 cookie.json
 discord_token.txt
 test/*
+.vscode/*
+__pycache__/*
