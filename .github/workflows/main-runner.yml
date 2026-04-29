@@ -72,8 +72,7 @@ jobs:
       continue-on-error: true
       run: |
         git add data/matchup_settings.json
-        git commit -m 'Automatic update of matchup settings.'
-        git push
+        git commit -m 'Automatic update of matchup settings.' && git push || echo "No changes to commit."
     - name: Artifacts
       uses: actions/upload-artifact@v4
       with:
