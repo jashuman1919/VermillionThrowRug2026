@@ -1239,6 +1239,7 @@ class Vermillion_Throw_Rug_Runner:
             _, stat_updates_messages, _ = self.update_stat_points(
                 last_matchup_period + 1
             )
+            messages = last_week_results_messages + stat_updates_messages
 
             date_str = str(date.today())
             filename = f'output/last_week_results_{date_str}.txt'
@@ -1256,11 +1257,12 @@ class Vermillion_Throw_Rug_Runner:
                 k: v for k, v in past_periods.items() if last_matchup_period - k < 1
             }
 
+        # On any day, recalculate scores for specified past matchups, execute bot transactions, and send specified Discord messages.
         self.recalculate_scores(past_periods, team_dict)
         self.bot_transactions(current_scoring_period)
 
-        messages = last_week_results_messages + stat_updates_messages
-        self.send_messages(messages)
+        if len(messages) > 0:
+            self.send_messages(messages)
 
 
 if __name__ == '__main__':
