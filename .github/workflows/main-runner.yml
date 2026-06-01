@@ -21,6 +21,14 @@ on:
           options:
             - true
             - false
+        disable_messages:
+          description: 'Disable Messages'
+          required: false
+          default: 'true'
+          type: choice
+          options:
+            - true
+            - false
 
 permissions:
   contents: write
@@ -67,7 +75,10 @@ jobs:
         if [ "${{ inputs.disable_player_transactions }}" == "true" ]; then
           flags="$flags -p"
         fi
-        flags="-d -p"
+        if [ "${{ inputs.disable_messages }}" == "true" ]; then
+          flags="$flags -m"
+        fi
+        flags="-d -p -m"
         python vtr_runner.py $flags --swid $SWID --espn-s2 $ESPN_S2 --discord-token $DISCORD_TOKEN --discord-channel $DISCORD_CHANNEL_ID
     - name: Commit matchup settings
       continue-on-error: true

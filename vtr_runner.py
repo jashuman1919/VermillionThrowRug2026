@@ -100,6 +100,12 @@ def parse_args():
         action='store_true',
         help='Disable player transactions.',
     )
+    parser.add_argument(
+        '-m',
+        '--disable-messages',
+        action='store_true',
+        help='Disable messages.',
+    )
 
     args = parser.parse_args()
 
@@ -107,6 +113,7 @@ def parse_args():
     print('################ Arguments ################')
     print(f'Debug: {args.debug}')
     print(f'Disable Player Transactions: {args.disable_player_transactions}')
+    print(f'Disable Messages: {args.disable_messages}')
     print(f'Cookie file: {args.cookie_file}')
     if args.swid == '':
         print('SWID not provided')
@@ -487,6 +494,7 @@ class Vermillion_Throw_Rug_Runner:
         discord_channel,
         debug,
         disable_player_transactions,
+        disable_messages
     ):
         """
         Initialize the runner with authentication and configuration.
@@ -497,6 +505,7 @@ class Vermillion_Throw_Rug_Runner:
             discord_channel: Discord channel ID for messages
             debug: Enable debug mode (no API POSTs)
             disable_player_transactions: Skip actual player transactions
+            disable_messages: Skip sending status messages
         """
 
         self.cookies = cookies
@@ -504,6 +513,7 @@ class Vermillion_Throw_Rug_Runner:
         self.discord_channel = discord_channel
         self.debug = debug
         self.disable_player_transactions = disable_player_transactions
+        self.disable_messages = disable_messages
 
     def http_request(self, url, headers={}, data=None, attempts=5):
         """
@@ -1261,7 +1271,7 @@ class Vermillion_Throw_Rug_Runner:
         self.recalculate_scores(past_periods, team_dict)
         self.bot_transactions(current_scoring_period)
 
-        if len(messages) > 0:
+        if not self.debug and not self.disable_messages and len(messages) > 0:
             self.send_messages(messages)
 
 
@@ -1286,5 +1296,6 @@ if __name__ == '__main__':
         ARGS.discord_channel,
         ARGS.debug,
         ARGS.disable_player_transactions,
+        ARGS.disable_messages
     )
     RUNNER.run()
