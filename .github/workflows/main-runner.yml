@@ -80,7 +80,6 @@ jobs:
         if [ "${{ inputs.disable_messages }}" == "true" ]; then
           flags="$flags -m"
         fi
-        flags="-d -p -m"
         python vtr_runner.py $flags --swid $SWID --espn-s2 $ESPN_S2 --discord-token $DISCORD_TOKEN --discord-channel $DISCORD_CHANNEL_ID
     - name: Commit matchup settings
       continue-on-error: true
