@@ -704,25 +704,29 @@ class Vermillion_Throw_Rug_Runner:
             settings = matchup_settings[str(matchup_period)]
             for matchup in data['schedule']:
                 id = matchup['id']
-                home_adjustment, home_adjustment_changed = get_score_adjustment(
-                    matchup['home'], settings, reason
-                )
-                away_adjustment, away_adjustment_changed = get_score_adjustment(
-                    matchup['away'], settings, reason
-                )
+                this_matchup_adjustment = {}
+                this_matchup_adjustment_debug = {'id': id}
+                if 'home' in matchup:
+                    home_adjustment, home_adjustment_changed = get_score_adjustment(
+                        matchup['home'], settings, reason
+                    )
+                    this_matchup_adjustment['home'] = home_adjustment
+                    this_matchup_adjustment_debug['home'] = matchup['home']
+                    this_matchup_adjustment_debug['home_adjustment'] = home_adjustment['adjustment']
+                else:
+                    home_adjustment_changed = False
+                if 'away' in matchup:
+                    away_adjustment, away_adjustment_changed = get_score_adjustment(
+                        matchup['away'], settings, reason
+                    )
+                    this_matchup_adjustment['away'] = away_adjustment
+                    this_matchup_adjustment_debug['away'] = matchup['away']
+                    this_matchup_adjustment_debug['away_adjustment'] = away_adjustment['adjustment']
+                else:
+                    away_adjustment_changed = False
                 if home_adjustment_changed or away_adjustment_changed:
-                    adjustments.append(
-                        {'away': away_adjustment, 'home': home_adjustment, 'id': id}
-                    )
-                    adjustments_debug[matchup_period].append(
-                        {
-                            'id': id,
-                            'away': team_dict[away_adjustment['teamId']],
-                            'home': team_dict[home_adjustment['teamId']],
-                            'away_adjustment': away_adjustment['adjustment'],
-                            'home_adjustment': home_adjustment['adjustment'],
-                        }
-                    )
+                    adjustments.append(this_matchup_adjustment)
+                    adjustments_debug[matchup_period].append(this_matchup_adjustment_debug)
                     print(f'Recalculated score and adjustments for matchup {id}.')
                 else:
                     print(
@@ -749,12 +753,14 @@ class Vermillion_Throw_Rug_Runner:
                     print(f'    Matchup period {period}:')
                     for matchup in matchups:
                         print(f'      Matchup {matchup["id"]}:')
-                        print(
-                            f'        {matchup["away"]}: {matchup["away_adjustment"]}'
-                        )
-                        print(
-                            f'        {matchup["home"]}: {matchup["home_adjustment"]}'
-                        )
+                        if 'away' in matchup:
+                            print(
+                                f'        {matchup["away"]}: {matchup["away_adjustment"]}'
+                            )
+                        if 'home' in matchup:
+                            print(
+                                f'        {matchup["home"]}: {matchup["home_adjustment"]}'
+                            )
         else:
             print('No adjustments needed.')
 
@@ -889,53 +895,54 @@ class Vermillion_Throw_Rug_Runner:
         schedule = data['schedule']
 
         for matchup in schedule:
-            # Get team IDs and initial scores.
-            away_team = team_dict[matchup['away']['teamId']]
-            home_team = team_dict[matchup['home']['teamId']]
-            away_initial_score = matchup['away']['totalPoints']
-            home_initial_score = matchup['home']['totalPoints']
-            score_difference = round(abs(home_initial_score - away_initial_score), 1)
+            if 'home' in matchup and 'away' in matchup:
+                # Get team IDs and initial scores.
+                away_team = team_dict[matchup['away']['teamId']]
+                home_team = team_dict[matchup['home']['teamId']]
+                away_initial_score = matchup['away']['totalPoints']
+                home_initial_score = matchup['home']['totalPoints']
+                score_difference = round(abs(home_initial_score - away_initial_score), 1)
 
-            if first_digit_even(score_difference):
-                diff_parity = 'even'
-                drops_message = 'So no drops.'
-            else:
-                # Drop players if score difference starts with odd digit.
-                away_player = self.drop_best_player(
-                    matchup['away'], current_scoring_period, team_dict
+                if first_digit_even(score_difference):
+                    diff_parity = 'even'
+                    drops_message = 'So no drops.'
+                else:
+                    # Drop players if score difference starts with odd digit.
+                    away_player = self.drop_best_player(
+                        matchup['away'], current_scoring_period, team_dict
+                    )
+                    home_player = self.drop_best_player(
+                        matchup['home'], current_scoring_period, team_dict
+                    )
+                    diff_parity = 'odd'
+                    drops_message = (
+                        f'{away_team} drops {away_player}. {home_team} drops {home_player}.'
+                    )
+
+                # Get message lines for each team.
+                away_final_score, away_adjustment_line = get_point_bonus_message(
+                    away_team, away_initial_score
                 )
-                home_player = self.drop_best_player(
-                    matchup['home'], current_scoring_period, team_dict
-                )
-                diff_parity = 'odd'
-                drops_message = (
-                    f'{away_team} drops {away_player}. {home_team} drops {home_player}.'
+                home_final_score, home_adjustment_line = get_point_bonus_message(
+                    home_team, home_initial_score
                 )
 
-            # Get message lines for each team.
-            away_final_score, away_adjustment_line = get_point_bonus_message(
-                away_team, away_initial_score
-            )
-            home_final_score, home_adjustment_line = get_point_bonus_message(
-                home_team, home_initial_score
-            )
-
-            # Add message for this matchup to the full list of messages.
-            messages.append(
-                message_template.format(
-                    away=away_team,
-                    home=home_team,
-                    away_initial=away_initial_score,
-                    home_initial=home_initial_score,
-                    diff=score_difference,
-                    diff_parity=diff_parity,
-                    drops=drops_message,
-                    away_adjustment=away_adjustment_line,
-                    home_adjustment=home_adjustment_line,
-                    away_final=away_final_score,
-                    home_final=home_final_score,
+                # Add message for this matchup to the full list of messages.
+                messages.append(
+                    message_template.format(
+                        away=away_team,
+                        home=home_team,
+                        away_initial=away_initial_score,
+                        home_initial=home_initial_score,
+                        diff=score_difference,
+                        diff_parity=diff_parity,
+                        drops=drops_message,
+                        away_adjustment=away_adjustment_line,
+                        home_adjustment=home_adjustment_line,
+                        away_final=away_final_score,
+                        home_final=home_final_score,
+                    )
                 )
-            )
 
         print('Done checking and dropping players.')
         return messages
@@ -1228,6 +1235,8 @@ class Vermillion_Throw_Rug_Runner:
 
         # Get basic info.
         past_periods, current_scoring_period, team_dict = self.get_basic_info()
+        #past_periods[22] = 166
+        #current_scoring_period = 167
         last_matchup_period = max(past_periods)
         last_matchup_last_scoring_period = past_periods[last_matchup_period]
 
